@@ -16,28 +16,28 @@ Loc::loadMessages(__FILE__);
  * зависит: меню отдаёт admin/menu.php, а его ядро подключает само для
  * каждого установленного модуля — регистрировать ничего не нужно.
  *
- * Логи открываются через просмотр файлов fileman, а не прямой ссылкой на
- * /local/sh_log/*.log: прямая ссылка работает, только если каталог открыт
- * веб-серверу всем, а открытым он быть не должен. @see docs/security.md
+ * Логи открываются страницей модуля /bitrix/admin/shef_problems_logs.php:
+ * каталог логов лежит вне корня сайта, и ни прямая ссылка, ни файловый
+ * менеджер Битрикса до него не дотянутся. @see docs/security.md
  *
  * Метод чистый — без глобалов и обращений к базе, — чтобы его можно было
- * проверить без портала: права, язык и сайт передаёт admin/menu.php.
+ * проверить без портала: права и язык передаёт admin/menu.php.
  */
 class AdminMenu
 {
 	public const PARENT_MENU = 'global_menu_settings';
 	public const ITEMS_ID = 'menu_shef_problems';
 
+	public const LOGS_PAGE = '/bitrix/admin/shef_problems_logs.php';
+	
 	/**
 	 * @param string $lang язык административной части
-	 * @param string $site сайт, от корня которого откладывается путь к логам
 	 * @param bool $isPerfmonInstalled ссылка на таблицу ошибок платёжных
 	 *        систем ведёт в perfmon — без модуля она открыла бы ошибку
 	 * @return array описание раздела в формате admin/menu.php
 	 */
 	public static function build(
 		string $lang,
-		string $site,
 		bool $isPerfmonInstalled = false
 	): array
 	{
@@ -53,7 +53,7 @@ class AdminMenu
 				[
 					'text' => (string)Loc::getMessage('SH_PROBLEMS_MENU_LOGS'),
 					'items_id' => static::ITEMS_ID.'_logs',
-					'items' => static::getLogItems($lang, $site),
+					'items' => static::getLogItems($lang),
 				],
 				[
 					'text' => (string)Loc::getMessage('SH_PROBLEMS_MENU_EVENT_LOG'),
@@ -72,7 +72,7 @@ class AdminMenu
 	 * Файлы логов: всё, что пишут логгеры с обработчиком «file», плюс
 	 * файлы, которые на проекте принято класть туда же.
 	 */
-	protected static function getLogItems(string $lang, string $site): array
+	protected static function getLogItems(string $lang): array
 	{
 		$items = [];
 
@@ -86,8 +86,7 @@ class AdminMenu
 					$items[] = static::getLogFileItem(
 						ucwords(mb_strtolower($auditType)),
 						mb_strtolower($auditType),
-						$lang,
-						$site
+						$lang
 					);
 				}
 
@@ -97,37 +96,36 @@ class AdminMenu
 			$items[] = static::getLogFileItem(
 				$logger->name,
 				mb_strtolower($logger->name),
-				$lang,
-				$site
+				$lang
 			);
 		}
 
 		// exceptions.log — /bitrix/.settings.php, exception_handling;
 		// mailer.log — /bitrix/.settings.php, smtp. Путь задаёт проект, модуль
-		// только предлагает класть их рядом.
+		// только предлагает класть их в каталог логов — тогда они видны здесь.
 		$items[] = [
 			'text' => (string)Loc::getMessage('SH_PROBLEMS_MENU_LOGS_EXCEPTIONS'),
-			'url' => static::getUrlLogFile('exceptions', $lang, $site),
+			'url' => static::getUrlLogFile('exceptions.log', $lang),
 		];
 		$items[] = [
 			'text' => (string)Loc::getMessage('SH_PROBLEMS_MENU_LOGS_EMAIL'),
-			'url' => static::getUrlLogFile('mailer', $lang, $site),
+			'url' => static::getUrlLogFile('mailer.log', $lang),
 		];
 		$items[] = [
 			'text' => (string)Loc::getMessage('SH_PROBLEMS_MENU_LOGS_LIST'),
-			'url' => static::getUrlLogList($lang, $site),
+			'url' => static::getUrlLogList($lang),
 		];
 
 		return $items;
 	}
 
-	protected static function getLogFileItem(string $title, string $name, string $lang, string $site): array
+	protected static function getLogFileItem(string $title, string $name, string $lang): array
 	{
 		return [
 			'text' => (string)Loc::getMessage('SH_PROBLEMS_MENU_LOGS_FACTORY', [
 				'#LOGGER_NAME#' => $title,
 			]),
-			'url' => static::getUrlLogFile($name, $lang, $site),
+			'url' => static::getUrlLogFile($name.'.log', $lang),
 		];
 	}
 
@@ -157,31 +155,60 @@ class AdminMenu
 		return $items;
 	}
 
+	/**
+	 * Кладёт страницу логов в /bitrix/admin, если её там нет.
+	 *
+	 * Страницу раскладывает установщик (installDir, install/admin). Но портал,
+	 * обновлённый с 1.x заменой файлов, установщик не проходил — и пункты
+	 * «Логи» вели бы в 404. Переустановка не выход: она стирает настройки.
+	 * Поэтому меню, которое строится только у администратора, само кладёт
+	 * недостающую заглушку. Есть — ничего не делает: одна проверка is_file.
+	 *
+	 * @param string $documentRoot корень сайта
+	 * @param string $moduleDir каталог модуля, абсолютный
+	 * @return bool страница на месте
+	 */
+	public static function ensureLogsPage(string $documentRoot, string $moduleDir): bool
+	{
+		$target = rtrim($documentRoot, '/').static::LOGS_PAGE;
+		if(is_file($target))
+		{
+			return true;
+		}
+		
+		$source = rtrim($moduleDir, '/').'/install/admin/'.basename(static::LOGS_PAGE);
+		if(!is_file($source) || !is_dir(dirname($target)) || !is_writable(dirname($target)))
+		{
+			return false;
+		}
+		
+		return copy($source, $target);
+	}
+	
 	// region Адреса ////
 	/**
-	 * Просмотр файла лога в fileman — только для того, кому fileman открыт.
+	 * Просмотр файла лога страницей модуля.
+	 *
+	 * @param string $fileName имя файла в каталоге логов, с расширением
 	 */
-	public static function getUrlLogFile(string $name, string $lang, string $site): string
+	public static function getUrlLogFile(string $fileName, string $lang): string
 	{
-		return '/bitrix/admin/fileman_file_view.php?'.http_build_query([
+		return static::LOGS_PAGE.'?'.http_build_query([
 			'lang' => $lang,
-			'site' => $site,
-			'path' => Constants::getLogFullPath($name, false),
+			'file' => $fileName,
 		]);
 	}
-
+	
 	/**
-	 * Каталог логов в файловом менеджере.
+	 * Список файлов в каталоге логов.
 	 */
-	public static function getUrlLogList(string $lang, string $site): string
+	public static function getUrlLogList(string $lang): string
 	{
-		return '/bitrix/admin/fileman_admin.php?'.http_build_query([
+		return static::LOGS_PAGE.'?'.http_build_query([
 			'lang' => $lang,
-			'site' => $site,
-			'path' => Constants::getLogPath(),
 		]);
 	}
-
+	
 	/**
 	 * Журнал событий, отфильтрованный по типу.
 	 */

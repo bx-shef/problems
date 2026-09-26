@@ -12,6 +12,7 @@
  * @see \Shef\Problems\Integration\Main\AdminMenu
  */
 
+use Bitrix\Main\Application;
 use Bitrix\Main\Context;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
@@ -34,10 +35,15 @@ if(!Loader::includeModule('shef.problems'))
 
 $context = Context::getCurrent();
 
+// Портал, обновлённый с 1.x заменой файлов, установщик не проходил, и страницы
+// логов в /bitrix/admin у него нет. Не вышло положить — меню всё равно
+// строим: журнал событий и настройки от неё не зависят.
+AdminMenu::ensureLogsPage(
+	(string)Application::getDocumentRoot(),
+	dirname(__DIR__)
+);
+
 return AdminMenu::build(
 	lang: (string)($context?->getLanguage() ?: LANGUAGE_ID),
-	// В административной части сайт у контекста не задан: берём сайт по
-	// умолчанию — от его корня fileman отложит путь к логам.
-	site: (string)($context?->getSite() ?: \CSite::GetDefSite()),
 	isPerfmonInstalled: ModuleManager::isModuleInstalled('perfmon'),
 );

@@ -218,11 +218,11 @@ remove on the major release`, поэтому в `require` стоит потол�
 ```
 /bitrix/modules/shef.problems/install/js/shef-problems/monolog-pr-html/style.css  -> 403
 /bitrix/js/shef-problems/monolog-pr-html/style.css                              -> 200
-/local/sh_log/log.log                                                           -> 403 или 404
+/bitrix/admin/shef_problems_logs.php                                            -> страница логов, только администратору
 ```
 
-Последняя строка — не про модуль, а про проект: каталог логов закрывают на
-веб-сервере, см. [security.md](security.md).
+Логи лежат вне корня сайта, ссылки на них нет вовсе — см.
+[security.md](security.md).
 
 Полная процедура проверки на портале — в [portal-check.md](portal-check.md):
 шаги с ожидаемым результатом, отдельно обновление с 1.x и запуск

@@ -68,9 +68,11 @@ composer require bxshef/problems
 2. **Настройки → Настройки продукта → Настройки модулей → [SH] Учёт проблем** →
    вкладка «Сотрудники»: кому уходят проблемы каждого типа. Не заполните —
    всё уйдёт пользователю с ID 1.
-3. **Закройте каталог логов на веб-сервере** —
-   [как и зачем](https://github.com/bx-shef/problems/blob/main/docs/security.md).
-   Логи лежат в `/local/sh_log`, под корнем сайта.
+3. Логи пишутся **вне корня сайта** — на уровень выше него: при корне
+   `/home/bitrix/www` это `/home/bitrix/sh_log`. Веб-сервер их не отдаёт,
+   смотреть — через **Настройки → Учёт проблем → Логи**. Свой каталог, права,
+   `open_basedir` и перенос логов 1.x —
+   [безопасность логов](https://github.com/bx-shef/problems/blob/main/docs/security.md).
 4. По желанию — [ротация логов](https://github.com/bx-shef/problems/blob/main/docs/5_logrotate.md).
 
 # Как пользоваться
@@ -99,7 +101,7 @@ final class OrdersExchange
 }
 ```
 
-Запись ляжет в `/local/sh_log/sh_problems_problem.log` и в журнал событий.
+Запись ляжет в `sh_problems_problem.log` в каталоге логов и в журнал событий.
 Отладка на экран администратору:
 
 ```php

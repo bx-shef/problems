@@ -71,12 +71,12 @@ else
 	// портале отдаёт ServiceLocator.
 	\Bitrix\Main\Config\Configuration::$settings = require $root.'/.settings.php';
 
-	// Песочница вместо корня сайта: логи модуля пишутся в
-	// <корень>/local/sh_log, и на заглушках это временный каталог, который
-	// обвязка за собой убирает. На портале корень настоящий.
+	// Песочница вместо сайта: корень — <песочница>/www, а логи модуля пишутся
+	// на уровень выше корня, в <песочница>/sh_log. Обвязка за собой всё
+	// убирает. На портале корень и каталог логов настоящие.
 	$sandbox = sys_get_temp_dir().'/shef-problems-examples-'.getmypid();
-	mkdir($sandbox, 0777, true);
-	\Bitrix\Main\Application::$documentRoot = $sandbox;
+	mkdir($sandbox.'/www', 0777, true);
+	\Bitrix\Main\Application::$documentRoot = $sandbox.'/www';
 
 	register_shutdown_function(static function() use ($sandbox): void
 	{
