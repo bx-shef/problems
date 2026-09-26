@@ -69,11 +69,39 @@ namespace Bitrix\Main\Localization
 		 */
 		class Loc
 		{
+			/**
+			 * Сообщения, которые тест загрузил сам. Пусто — getMessage()
+			 * отдаёт код, как раньше: большинству тестов перевод не важен.
+			 * Загружены — отдаёт перевод с подстановкой, а незнакомый код —
+			 * null, как ядро: тест, которому важны подписи, увидит пропуск.
+			 *
+			 * @var array<string, string>
+			 */
+			public static array $messages = [];
+
 			public static function loadMessages(string $file): void {}
+
+			/** Подгрузить настоящий языковой файл модуля. */
+			public static function loadLangFile(string $path): void
+			{
+				$MESS = [];
+				include $path;
+				static::$messages = array_merge(static::$messages, $MESS);
+			}
 
 			public static function getMessage(string $code, ?array $replace = null, ?string $language = null): ?string
 			{
-				return $code;
+				if(empty(static::$messages))
+				{
+					return $code;
+				}
+
+				if(!isset(static::$messages[$code]))
+				{
+					return null;
+				}
+
+				return strtr(static::$messages[$code], $replace ?? []);
 			}
 		}
 	}

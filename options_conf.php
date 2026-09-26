@@ -2,6 +2,7 @@
 
 use Bitrix\Main\Localization\Loc;
 use Shef\Options\Main\Options;
+use Shef\Problems\Integration\Main\AdminMenu;
 use Shef\Problems\Main\Constants;
 
 /**
@@ -37,6 +38,17 @@ $options->addTab(
 					'#LANG#' => LANGUAGE_ID
 				]))
 				->setType(Options\TypeUIAlert::Warning)
+		)
+		->addOption(
+			// Логи лежат вне корня сайта, прямой ссылки на них нет: смотреть —
+			// страницей модуля. Каталог показываем, чтобы было видно, куда
+			// пишет модуль, — его может переопределить проект.
+			(new Options\RowInfo('Logs'))
+				->setDescription(Loc::getMessage($options->moduleId.'_TAB_DEF_Logs', [
+					'#URL#' => AdminMenu::getUrlLogList(LANGUAGE_ID),
+					'#DIR#' => htmlspecialcharsbx(Constants::getLogDir()),
+				]))
+				->setType(Options\TypeUIAlert::Note)
 		)
 		->addOption(
 			(new Options\Users('defuserid'))

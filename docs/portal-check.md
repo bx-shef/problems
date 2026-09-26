@@ -118,6 +118,10 @@ foreach(["getDefUserId","getAdminId","getDirectorId","getSyncUserId","getProduct
 
 **Ожидается:** шесть строк, ID — ровно те, что выбрали.
 
+На вкладке «Сотрудники» — строка «Логи модуля» со ссылкой и каталогом логов:
+ссылка открывает `/bitrix/admin/shef_problems_logs.php`, каталог — вне корня
+сайта (на BitrixVM `/home/bitrix/sh_log`).
+
 ## D. Меню «Учёт проблем»
 
 1. Под администратором: **Настройки → Учёт проблем**.
