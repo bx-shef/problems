@@ -61,7 +61,9 @@ unzip -Z1 shef.problems.zip | cut -d/ -f1 | sort -u
 
 **Ожидается:** «Модуль успешно установлен»; в `/bitrix/js/shef-problems/`
 появились два каталога — `monolog-pr-html` и `monolog-pr-html-admin`; появился
-`/bitrix/admin/shef_problems_logs.php`; `/bitrix/images/shef.problems` **не**
+`/bitrix/admin/shef_problems_logs.php` — одна строка `require` на
+`admin/logs.php` модуля **там, где модуль стоит** (поставили в
+`/local/modules` — путь `/local/modules/…`); `/bitrix/images/shef.problems` **не**
 появился.
 
 **Отдельно:** на стенде без `shef.options` (или со старым 2.x) установка
@@ -210,7 +212,8 @@ echo (new ReflectionClass(\Monolog\Logger::class))->getFileName(), PHP_EOL;'
 * в `b_module_to_module` не осталось обработчиков с `TO_MODULE_ID='shef.problems'`
   — в том числе обработчика `shef.uiclear` из 1.x;
 * `/bitrix/admin/shef_problems_logs.php` удалён, остальные файлы
-  `/bitrix/admin/` на месте;
+  `/bitrix/admin/` на месте. Если перед удалением положить на место заглушки
+  свой файл — он остаётся;
 * файлы в каталоге логов **остались**: логи — данные проекта, модуль их не
   трогает.
 

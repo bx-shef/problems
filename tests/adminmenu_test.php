@@ -114,44 +114,29 @@ $rejected = array_values(array_filter(
 ));
 Check::same('страница логов принимает каждое имя из меню', $rejected, []);
 
-Check::group('страница логов раскладывается установщиком');
-
-$settings = require $root.'/.settings.php';
-$adminMap = array_values(array_filter(
-	$settings['installDir']['value'],
-	static fn(array $map): bool => $map['to'] === '/bitrix/admin'
-))[0] ?? [];
-
-Check::same(
-	'заглушка лежит в install/admin под тем именем, что в меню',
-	is_file($root.($adminMap['from'] ?? '').'/'.basename(AdminMenu::LOGS_PAGE)),
-	true
-);
-Check::same(
-	'удаление снимает ровно этот файл, а не /bitrix/admin',
-	$adminMap['customPathUnInstall'] ?? null,
-	[AdminMenu::LOGS_PAGE]
-);
-
 Check::group('страница логов на портале, обновлённом заменой файлов');
 
-// Установщик на таком портале не запускался — страницы нет. Меню её кладёт.
+// Установщик на таком портале не запускался — страницы нет. Меню её пишет —
+// с путём туда, где модуль стоит. Подробно заглушку держит adminpage_test.php.
 $portal = sys_get_temp_dir().'/shef-problems-menu-'.getmypid();
 mkdir($portal.'/www/bitrix/admin', 0777, true);
 $target = $portal.'/www'.AdminMenu::LOGS_PAGE;
 
-Check::same('страницы нет — кладёт', AdminMenu::ensureLogsPage($portal.'/www', $root), true);
-Check::same('это заглушка модуля', (string)file_get_contents($target), (string)file_get_contents($root.'/install/admin/shef_problems_logs.php'));
+Check::same('страница в меню — та, что пишет AdminPage', AdminMenu::LOGS_PAGE, '/bitrix/admin/'.\Shef\Problems\Main\AdminPage::FILE);
+Check::same('страницы нет — пишет', AdminMenu::ensureLogsPage($portal.'/www', $root), true);
+Check::same(
+	'ведёт в этот модуль',
+	(string)file_get_contents($target),
+	\Shef\Problems\Main\AdminPage::getContent($portal.'/www', $root)
+);
 
 file_put_contents($target, 'своя версия проекта');
-Check::same('есть — не трогает', [AdminMenu::ensureLogsPage($portal.'/www', $root), (string)file_get_contents($target)], [true, 'своя версия проекта']);
-
-Check::same('нет /bitrix/admin — не создаёт его', AdminMenu::ensureLogsPage($portal.'/нет', $root), false);
+Check::same('чужой файл — не трогает', [AdminMenu::ensureLogsPage($portal.'/www', $root), (string)file_get_contents($target)], [false, 'своя версия проекта']);
 
 \Bitrix\Main\Application::$documentRoot = $portal.'/www';
 unlink($target);
 $includeMenu(new CUser(true));
-Check::same('admin/menu.php кладёт страницу сам', is_file($target), true);
+Check::same('admin/menu.php пишет страницу сам', is_file($target), true);
 
 \Bitrix\Main\IO\Directory::deleteDirectory($portal);
 \Bitrix\Main\Application::$documentRoot = '';

@@ -4,6 +4,7 @@ namespace Shef\Problems\Integration\Main;
 
 use Bitrix\Main\Localization\Loc;
 use Shef\Problems\Logger;
+use Shef\Problems\Main\AdminPage;
 use Shef\Problems\Main\Constants;
 
 Loc::loadMessages(__FILE__);
@@ -28,7 +29,7 @@ class AdminMenu
 	public const PARENT_MENU = 'global_menu_settings';
 	public const ITEMS_ID = 'menu_shef_problems';
 
-	public const LOGS_PAGE = '/bitrix/admin/shef_problems_logs.php';
+	public const LOGS_PAGE = '/bitrix/admin/'.AdminPage::FILE;
 	
 	/**
 	 * @param string $lang язык административной части
@@ -158,31 +159,20 @@ class AdminMenu
 	/**
 	 * Кладёт страницу логов в /bitrix/admin, если её там нет.
 	 *
-	 * Страницу раскладывает установщик (installDir, install/admin). Но портал,
-	 * обновлённый с 1.x заменой файлов, установщик не проходил — и пункты
-	 * «Логи» вели бы в 404. Переустановка не выход: она стирает настройки.
-	 * Поэтому меню, которое строится только у администратора, само кладёт
-	 * недостающую заглушку. Есть — ничего не делает: одна проверка is_file.
+	 * Заглушку пишет установщик. Но портал, обновлённый с 1.x заменой файлов,
+	 * установщик не проходил — и пункты «Логи» вели бы в 404. Переустановка не
+	 * выход: она стирает настройки. Поэтому меню, которое строится только у
+	 * администратора, пишет недостающую заглушку само — тем же
+	 * AdminPage::install(), с путём туда, где модуль стоит. Чужой файл на
+	 * этом месте не трогает.
 	 *
 	 * @param string $documentRoot корень сайта
 	 * @param string $moduleDir каталог модуля, абсолютный
-	 * @return bool страница на месте
+	 * @return bool страница на месте и ведёт в этот модуль
 	 */
 	public static function ensureLogsPage(string $documentRoot, string $moduleDir): bool
 	{
-		$target = rtrim($documentRoot, '/').static::LOGS_PAGE;
-		if(is_file($target))
-		{
-			return true;
-		}
-		
-		$source = rtrim($moduleDir, '/').'/install/admin/'.basename(static::LOGS_PAGE);
-		if(!is_file($source) || !is_dir(dirname($target)) || !is_writable(dirname($target)))
-		{
-			return false;
-		}
-		
-		return copy($source, $target);
+		return AdminPage::install($documentRoot, $moduleDir);
 	}
 	
 	// region Адреса ////
