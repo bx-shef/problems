@@ -39,6 +39,20 @@ namespace Bitrix\Main\Type
 			{
 				return $this->value;
 			}
+
+			public function format(string $format): string
+			{
+				return $this->value;
+			}
+
+			/** Что прибавляли — в том порядке, как ядро: меняет сам объект. */
+			public array $added = [];
+
+			public function add(string $interval): static
+			{
+				$this->added[] = $interval;
+				return $this;
+			}
 		}
 
 		class DateTime extends Date {}

@@ -18,7 +18,6 @@
  */
 
 use Monolog\Level as MonologLevel;
-use Monolog\Handler as MonologHandler;
 use Bitrix\Main\Loader;
 use Shef\Problems\Factory\SystemLoggerFactory;
 use Shef\Problems\Integration\Monolog\Logger;
@@ -197,8 +196,11 @@ return [
 				{
 					return (new Logger('log'))
 						->pushHandler(
-							(new MonologHandler\StreamHandler(
-								stream: Constants::getLogFullPath(mb_strtolower(Shef\Problems\Logger::Log->name)),
+							// С потолком размера: отладочный лог на портале рос без
+							// предела и забивал диск. Log1Handler не выход — он
+							// стирал бы файл на каждом запросе, и Log стал бы Log1.
+							(new Handler\CappedStreamHandler(
+								filename: Constants::getLogFullPath(mb_strtolower(Shef\Problems\Logger::Log->name)),
 								level: MonologLevel::Debug
 							))
 							->pushProcessor(new Processor\TraceProcessor(false))

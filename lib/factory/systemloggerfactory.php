@@ -3,7 +3,6 @@
 namespace Shef\Problems\Factory;
 
 use Monolog\Level as MonologLevel;
-use Monolog\Handler as MonologHandler;
 use Monolog\LogRecord as MonologLogRecord;
 use Shef\Problems\Integration\Monolog\Logger;
 use Shef\Problems\Integration\Monolog\Handler;
@@ -35,8 +34,10 @@ class SystemLoggerFactory
 		
 		return (new Logger('problems'))
 			->pushHandler(
-				(new MonologHandler\StreamHandler(
-					stream: Constants::getLogFullPath(mb_strtolower($auditType)),
+				// Потолок размера — как у отладочного лога: цикл сбоев в агенте
+				// пишет проблему на каждой итерации.
+				(new Handler\CappedStreamHandler(
+					filename: Constants::getLogFullPath(mb_strtolower($auditType)),
 					level: $logLevel
 				))
 				->setFormatter(Constants::getDefaultFormatter())
