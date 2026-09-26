@@ -30,13 +30,11 @@ class Events
 	 */
 	public static function onPageStart(): void
 	{
-		$request = Context::getCurrent()->getRequest();
-		if($request->isAdminSection())
+		// В CLI и в агентах контекста запроса может не быть.
+		$request = Context::getCurrent()?->getRequest();
+		if($request?->isAdminSection() === true)
 		{
-			Extension::load([
-				'shef-problems.monolog-pr-html',
-				'shef-problems.monolog-pr-html-admin'
-			]);
+			Extension::load(Constants::getExtensionList());
 		}
 	}
 	

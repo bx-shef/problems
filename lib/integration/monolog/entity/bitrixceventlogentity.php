@@ -52,16 +52,35 @@ class BitrixCEventLogEntity
 	}
 	
 	/**
+	 * Уровень Monolog -> SEVERITY журнала событий.
+	 *
+	 * Журнал знает пять значений: SECURITY, ERROR, WARNING, INFO, DEBUG, — а
+	 * всё остальное CEventLog::Add() записывает как UNKNOWN. Раньше сюда шло
+	 * имя уровня как есть, и CRITICAL, ALERT, EMERGENCY — самые важные
+	 * записи — ложились в журнал «неизвестными» и не находились фильтром по
+	 * важности. Исходный уровень не теряется: он стоит в заголовке описания,
+	 * см. BitrixCEventLogFormatter::format().
+	 *
 	 * @param Level $level
 	 * @return $this
 	 *
-	 * @see \Monolog\Level::getName()
-	 * @see \CEventLog
+	 * @see \CEventLog::Add()
 	 */
 	public function setSeverity(Level $level): self
 	{
-		$this->severity = $level->getName();
+		$this->severity = static::mapSeverity($level);
 		return $this;
+	}
+	
+	public static function mapSeverity(Level $level): string
+	{
+		return match($level)
+		{
+			Level::Debug => 'DEBUG',
+			Level::Info, Level::Notice => 'INFO',
+			Level::Warning => 'WARNING',
+			Level::Error, Level::Critical, Level::Alert, Level::Emergency => 'ERROR',
+		};
 	}
 	
 	/**

@@ -1,0 +1,34 @@
+/home/bitrix/www/local/sh_log/log.log
+/home/bitrix/www/local/sh_log/log1.log
+/home/bitrix/www/local/sh_log/deprecations.log
+/home/bitrix/www/local/sh_log/log-custom.log
+/home/bitrix/www/local/sh_log/log1-custom.log
+{
+	su bitrix bitrix
+	daily
+	missingok
+	rotate 2
+	maxsize 5M
+	compress
+	delaycompress
+	notifempty
+	create 0644 bitrix bitrix
+}
+
+/home/bitrix/www/local/sh_log/mailer.log
+/home/bitrix/www/local/sh_log/exceptions.log
+/home/bitrix/www/local/sh_log/sh_problems_problem.log
+/home/bitrix/www/local/sh_log/sh_problems_sync.log
+/home/bitrix/www/local/sh_log/sh_problems_product.log
+/home/bitrix/www/local/sh_log/sh_problems_sale.log
+{
+	su bitrix bitrix
+	daily
+	missingok
+	rotate 10
+	maxsize 5M
+	compress
+	delaycompress
+	notifempty
+	create 0644 bitrix bitrix
+}

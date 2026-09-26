@@ -1,38 +1,60 @@
-# Набор заглушек
+# Быстрая отладка: `_pr`, `_log`, `_log1`
 
-| Функция | Описание                                      |
-|--------:|:----------------------------------------------|
-|     _pr | вывод на экран                                |
-|    _log | вывод в файл лога                             |
-|   _log1 | вывод в файл лога и автоочистка перед записью |
+Функции объявляет `def-functions.php`, подключается он из `include.php`.
 
+| функция | что делает |
+|---|---|
+| `_pr($o, bool $show = false)` | вывод на экран, по умолчанию только администратору; всё экранируется |
+| `_log(array $value = [], string $fileName = 'log-custom')` | запись в `/local/sh_log/<fileName>.log`, дописыванием |
+| `_log1(array $value = [], string $fileName = 'log1-custom')` | то же, но первый вызов за запрос файл перезаписывает |
 
-# [`\Shef\Problems\Throwable\Manager`] Обработка \Throwable
-Позволяет исключение `\Throwable` перевести в `Bitrix\Main\Error`
+К каждой записи добавляется трассировка — откуда позвали.
 
-Пример использования:
+## Чьи функции победят
+
+Те же три функции объявляет `shef.options`, и каждая закрыта
+`function_exists`: побеждает тот, кто объявил первым.
+
+1. **Версия проекта** — `bitrix/php_interface/def-functions.php`, если есть:
+   её подключают оба модуля до своих.
+2. **Этот модуль** — `include.php` подключает `def-functions.php` до
+   `autoload.php`, а `autoload.php` уже подключает `shef.options`.
+3. **shef.options** — если его подключили в запросе раньше этого модуля.
+
+Сигнатура `_log()` у обоих модулей одна — массив и имя файла, — так что
+вызов работает с любой. Разница в каталоге: этот модуль пишет в
+`/local/sh_log`, `shef.options` — в `/local/log`.
+
+## Исключение в ошибку ядра
+
+# [`\Shef\Problems\Throwable`] Обработка \Throwable
+
+| класс | что делает |
+|---|---|
+| Manager::buildError | `\Throwable` → `\Bitrix\Main\Error`: текст, файл, строка и по желанию трассировка |
+
 ```php
-<?php
 $result = new \Bitrix\Main\Result();
 
 try
 {
-  // ... ////
+	// ...
 }
 catch(\Throwable $throwable)
 {
-  $result->addError(
-    \Shef\Problems\Throwable\Manager::buildError(
-      throwable: $throwable,
-      isUseTrace: false,
-      code: 'codeError',
-      customData: [
-        'key' => 'value'
-      ]
-    )
-  );
+	$result->addError(
+		\Shef\Problems\Throwable\Manager::buildError(
+			throwable: $throwable,
+			isUseTrace: false,
+			code: 'codeError',
+			customData: [
+				'key' => 'value'
+			]
+		)
+	);
 }
-?>
 ```
 
-[← События](docs/1_events.md) | [↑ Содержание](README.md) | [Уровни логирования →](docs/3_loglevel.md)
+Запускаемый пример — [examples/throwable.php](../examples/throwable.php).
+
+[← События](1_events.md) | [↑ Содержание](../README.md) | [Уровни логирования →](3_loglevel.md)

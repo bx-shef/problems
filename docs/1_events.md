@@ -1,10 +1,54 @@
-# События
+# [`\Shef\Problems\Integration`] События и меню
 
-* `main:OnPageStart` - автоподключение css модуля для админки
-* `main:onEventLogGetAuditTypes` регистрируются типы событий в журнале событий _CEventLog_.
-* `shef.uiclear:onBitrixMenuExtInitTopPanelUserMenu` регестрирует пункты меню для администратора
+Что модуль регистрирует в ядре при установке. Список — в `.settings.php`, ключ
+`installEvents`; что каждый обработчик существует, сверяет
+`tests/settings_test.php`.
 
-|![shef.problems::onBitrixMenuExtInitTopPane](/bitrix/images/shef.problems/docs/scr1.png)|![shef.problems::onBitrixMenuExtInitTopPane](/bitrix/images/shef.problems/docs/scr2.png)|
+| обработчик | событие | что делает |
+|---|---|---|
+| Main\Events::onPageStart | `main:OnPageStart` | в административной части подключает стили вывода `PrHtml` |
+| Main\Events::onEventLogGetAuditTypes | `main:OnEventLogGetAuditTypes` | регистрирует типы событий модуля в журнале событий — их видно в фильтре |
 
+Типы событий журнала — `\Shef\Problems\Main\Constants::getAuditTypeList()`:
 
-[↑ Содержание](README.md) | [def-functions →](docs/2_deffunctions.md)
+| тип | о чём |
+|---|---|
+| `SH_PROBLEMS_PROBLEM` | проблема общего вида — тип по умолчанию |
+| `SH_PROBLEMS_SYNC` | проблема с синхронизацией |
+| `SH_PROBLEMS_PRODUCT` | проблема с товаром |
+| `SH_PROBLEMS_SALE` | проблема с продажами |
+
+## Меню «Учёт проблем»
+
+**Настройки → Учёт проблем** в административной части, только администратору.
+Отдаёт его `admin/menu.php`: ядро подключает этот файл само для каждого
+установленного модуля, ничего регистрировать не нужно. Разметку меню строит
+`\Shef\Problems\Integration\Main\AdminMenu::build()`.
+
+| пункт | куда ведёт |
+|---|---|
+| Логи → `[Monolog] …` | каждый файл, который пишут логгеры модуля; фабрика проблем — по файлу на тип |
+| Логи → Ошибки PHP, E-mail | `/local/sh_log/exceptions.log` и `mailer.log`, если проект кладёт их туда |
+| Логи → Каталог логов | `/local/sh_log` в файловом менеджере |
+| Журнал событий → `[Monolog] …` | журнал, отфильтрованный по типу события |
+| Журнал событий → Ошибки платёжных систем | таблица `b_sale_pay_system_err_log`; только если стоит `perfmon` |
+| Настройки модуля | страница настроек |
+
+Логи открываются **через просмотр файлов** (`fileman_file_view.php`), а не
+прямой ссылкой на файл: прямая ссылка работала бы, только если каталог логов
+открыт веб-серверу всем. Открытым он быть не должен — см.
+[security.md](security.md).
+
+## До 2.0.0: shef.uiclear
+
+Раньше те же пункты вешались на верхнюю панель Битрикс24 через событие
+`shef.uiclear:onBitrixMenuExtInitTopPanelUserMenu`, и модуль требовал
+`shef.uiclear`. С 2.0.0 от него не зависит: меню — штатное, административное.
+
+На портале, обновлённом с 1.x, регистрация того обработчика остаётся: замена
+файлов её не снимает. Поэтому класс
+`\Shef\Problems\Integration\Shef\UiClear\Events` оставлен заглушкой — отвечает
+«нечего добавить» и не падает, — а деинсталляция снимает и эту регистрацию.
+Хотите убрать её сразу — переустановите модуль.
+
+[↑ Содержание](../README.md) | [def-functions →](2_deffunctions.md)

@@ -1,28 +1,40 @@
 {
-	"name": "shef/problems",
-	"description": "Отвечает за учёт проблем в Битрикс24",
+	"name": "bxshef/problems",
+	"description": "Битрикс24 (коробка): логирование на Monolog — файлы логов, журнал событий, вывод отладки, учёт проблем",
+	"type": "bitrix-module",
+	"license": "MIT",
 	"keywords": [
+		"bitrix",
 		"Bitrix24",
-		"PHP",
-		"Error"
+		"local-module",
+		"monolog",
+		"logger",
+		"psr-3"
 	],
-	"minimum-stability": "stable",
-	"license": "proprietary",
-	"type": "bitrix-d7-module",
+	"homepage": "https://github.com/bx-shef/problems",
 	"authors": [
 		{
 			"name": "Igor Shevchik",
-			"email": "shevchik.mail@gmail.com"
+			"email": "offer@bx-shef.by",
+			"homepage": "https://bx-shef.by/"
 		}
 	],
-	"require": {
-		"php": ">=8.1.0",
-		"ext-mbstring": "*",
-		"shef/options": "^2.2",
-		"shef/uiclear": "^1.1"
+	"support": {
+		"issues": "https://github.com/bx-shef/problems/issues",
+		"source": "https://github.com/bx-shef/problems"
 	},
-	"require_to_module_vendor": {
-		"monolog/monolog": "^3.3",
-		"symfony/options-resolver": "^6.2"
+	"minimum-stability": "stable",
+	"require": {
+		"php": ">=8.2.0",
+		"ext-mbstring": "*",
+		"composer/installers": "^1.0 || ^2.0",
+		"bxshef/options": "^3.0",
+		"monolog/monolog": "^3.10"
+	},
+	"extra": {
+		"installer-name": "shef.problems",
+		"branch-alias": {
+			"dev-main": "2.x-dev"
+		}
 	}
 }
