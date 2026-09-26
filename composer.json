@@ -1,0 +1,28 @@
+{
+	"name": "shef/problems",
+	"description": "Отвечает за учёт проблем в Битрикс24",
+	"keywords": [
+		"Bitrix24",
+		"PHP",
+		"Error"
+	],
+	"minimum-stability": "stable",
+	"license": "proprietary",
+	"type": "bitrix-d7-module",
+	"authors": [
+		{
+			"name": "Igor Shevchik",
+			"email": "shevchik.mail@gmail.com"
+		}
+	],
+	"require": {
+		"php": ">=8.1.0",
+		"ext-mbstring": "*",
+		"shef/options": "^2.2",
+		"shef/uiclear": "^1.1"
+	},
+	"require_to_module_vendor": {
+		"monolog/monolog": "^3.3",
+		"symfony/options-resolver": "^6.2"
+	}
+}

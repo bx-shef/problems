@@ -1,0 +1,223 @@
+<?php
+declare(strict_types=1);
+
+namespace Shef\Problems\Main;
+
+use CBPCalc;
+use CIBlockSection;
+use CIntranetUtils;
+use CUser;
+use Bitrix\Main\ArgumentNullException;
+use Bitrix\Main\LoaderException;
+use Bitrix\Main\ObjectException;
+use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Main\Type;
+use Bitrix\Main\Loader;
+use Bitrix\Main\Config;
+use Shef\Problems\Integration\BizProc;
+
+class Utils
+{
+	/**
+	 * Возвращает цепочку наследования объекта
+	 *
+	 * @param object $instance
+	 * @return string
+	 */
+	public static function getAllParents(object $instance): string
+	{
+		return str_replace('\\', '\\',
+			get_class($instance).'<br><-'
+			.implode(
+				'<br><-',
+				array_reverse(
+					class_parents($instance)
+				)
+			)
+		);
+	}
+	
+	/**
+	 * Добавления рабочих дней
+	 *
+	 * Если установлен модуль bizproc -> считает через его калькулятор
+	 * Если нет, то просто добавим дни
+	 *
+	 * @param Type\Date $date
+	 * @param string $interval -> 2D
+	 * @return Type\Date
+	 * @throws LoaderException
+	 * @throws ObjectException
+	 *
+	 * @see: \Bitrix\Main\Type\Date::add
+	 *
+	 * @memo  ранее указывали так +(-)2d. Но не понятно что будет с натацией 6YT5M -> @see: \Bitrix\Main\Type\Date::add
+	 */
+	public static function workDateAdd(
+		Type\Date $date,
+		string $interval
+	): Type\Date
+	{
+		if(!Loader::includeModule('bizproc'))
+		{
+			return $date->add($interval);
+		}
+
+		$formatDate = 'd.m.Y';
+		$response = (new CBPCalc(
+			(new BizProc\EmptyActivity('emptyActivity')))
+		)->Calculate('=workdateadd("'.$date->format($formatDate).'","'.$interval.'")');
+
+		return new Type\Date($response, $formatDate);
+	}
+
+	/**
+	 * Возвращает руководителей сотрудника
+	 * Первым будет непосредственный начальник
+	 * Последний будет руководитель topLevel уровня
+	 * Учитывает что сотрудник может работать в разных департаментах
+	 * Уволенных сотрудников обрабатывает
+	 *
+	 * @param int $userId - сотрудник
+	 * @param bool $skipAbsent - пропускать отсутствующих (отпуск и тп)
+	 * @param bool $clearCache - сбросить кеш и поискать сначала
+	 * @param int $topLevel - максимальный уровень вложенности
+	 * @return array|int[]
+	 * @throws ArgumentNullException
+	 * @throws LoaderException
+	 * @throws ObjectNotFoundException
+	 */
+	public static function getUserBoss(
+		int $userId,
+		bool $skipAbsent = true,
+		bool $clearCache = false,
+		int $topLevel = 5
+	): array
+	{
+		// region Cache ////
+		static $list;
+
+		if(null === $list)
+		{
+			$list = [];
+		}
+		if($clearCache)
+		{
+			$list[$userId] = null;
+		}
+
+		if(null !== $list[$userId])
+		{
+			return $list[$userId];
+		}
+		// endregion ////
+
+		// region Load Modules ////
+		$modules = [
+			'iblock',
+			'intranet'
+		];
+		foreach($modules as $module)
+		{
+			if(!Loader::includeModule($module))
+			{
+				throw new LoaderException('module '.$module.' not loaded');
+			}
+		}
+		// endregion ////
+
+		// region Init ////
+		$departmentIdList = [];
+		$departmentList = [];
+		$result = [];
+
+		$departmentIBlockId = (int)Config\Option::get('intranet', 'iblock_structure', 0);
+		if($departmentIBlockId < 1)
+		{
+			throw new ArgumentNullException('departmentIBlockId');
+		}
+		// endregion ////
+
+		// region Init.Department ////
+		$cursor = CUser::GetByID($userId);
+		if($row = $cursor->Fetch())
+		{
+			if(isset($row['UF_DEPARTMENT']))
+			{
+				if (!is_array($row['UF_DEPARTMENT']))
+				{
+					$row['UF_DEPARTMENT'] = [$row['UF_DEPARTMENT']];
+				}
+				$departmentIdList = $row['UF_DEPARTMENT'];
+			}
+		}
+		else
+		{
+			throw new ObjectNotFoundException('user not found');
+		}
+		unset($cursor, $row);
+
+		foreach($departmentIdList as $departmentId)
+		{
+			$list = [];
+			$cursor = CIBlockSection::GetNavChain($departmentIBlockId, (int)$departmentId);
+			while($row = $cursor->GetNext())
+			{
+				$list[] = (int)$row['ID'];
+			}
+			unset($cursor, $row);
+
+			$departmentList[] = array_reverse($list);
+		}
+		// endregion ////
+
+		// region Get Boss ////
+		foreach($departmentList as $departmentItems)
+		{
+			$maxLevel = $topLevel;
+			foreach($departmentItems as $level => $deptId)
+			{
+				if(
+					$maxLevel > 0
+					&& $level + 1 > $maxLevel
+				)
+				{
+					break;
+				}
+
+				$cursor = CIBlockSection::GetList(
+					[],
+					[
+						'IBLOCK_ID' => $departmentIBlockId,
+						'ID' => $deptId,
+					],
+					false,
+					['ID', 'UF_HEAD']
+				);
+				
+				while($row = $cursor->Fetch())
+				{
+					$userHead = (int)$row['UF_HEAD'];
+					if(
+						$userHead === $userId
+						|| $userHead <= 0
+						|| ($skipAbsent && CIntranetUtils::IsUserAbsent($userHead))
+					)
+					{
+						$maxLevel++;
+						continue;
+					}
+					if (!in_array($userHead, $result))
+					{
+						$result[] = $userHead;
+					}
+				}
+				unset($cursor, $row);
+			}
+		}
+		// endregion ////
+
+		$list[$userId] = $result;
+		return $list[$userId];
+	}
+}

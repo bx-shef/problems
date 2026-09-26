@@ -1,0 +1,11 @@
+/.idea
+.DS_Store
+
+composer.phar
+composer.lock
+
+/.versions
+/bitrix-version-builder
+
+*.log
+install/**/*.min.min.*
