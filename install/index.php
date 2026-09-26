@@ -475,8 +475,16 @@ Class shef_problems
 				&& !empty($map['customPathUnInstall'])
 			)
 			{
+				// Путь бывает и файлом: страница в /bitrix/admin — одна среди
+				// файлов всех модулей, и удалять там можно только своё.
 				foreach($map['customPathUnInstall'] as $customPath)
 				{
+					if(is_file($toPath.$customPath))
+					{
+						\Bitrix\Main\IO\File::deleteFile($toPath.$customPath);
+						continue;
+					}
+					
 					\Bitrix\Main\IO\Directory::deleteDirectory(
 						$toPath.$customPath
 					);

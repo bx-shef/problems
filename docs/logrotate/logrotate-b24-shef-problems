@@ -1,8 +1,8 @@
-/home/bitrix/www/local/sh_log/log.log
-/home/bitrix/www/local/sh_log/log1.log
-/home/bitrix/www/local/sh_log/deprecations.log
-/home/bitrix/www/local/sh_log/log-custom.log
-/home/bitrix/www/local/sh_log/log1-custom.log
+/home/bitrix/sh_log/log.log
+/home/bitrix/sh_log/log1.log
+/home/bitrix/sh_log/deprecations.log
+/home/bitrix/sh_log/log-custom.log
+/home/bitrix/sh_log/log1-custom.log
 {
 	su bitrix bitrix
 	daily
@@ -15,12 +15,12 @@
 	create 0644 bitrix bitrix
 }
 
-/home/bitrix/www/local/sh_log/mailer.log
-/home/bitrix/www/local/sh_log/exceptions.log
-/home/bitrix/www/local/sh_log/sh_problems_problem.log
-/home/bitrix/www/local/sh_log/sh_problems_sync.log
-/home/bitrix/www/local/sh_log/sh_problems_product.log
-/home/bitrix/www/local/sh_log/sh_problems_sale.log
+/home/bitrix/sh_log/mailer.log
+/home/bitrix/sh_log/exceptions.log
+/home/bitrix/sh_log/sh_problems_problem.log
+/home/bitrix/sh_log/sh_problems_sync.log
+/home/bitrix/sh_log/sh_problems_product.log
+/home/bitrix/sh_log/sh_problems_sale.log
 {
 	su bitrix bitrix
 	daily

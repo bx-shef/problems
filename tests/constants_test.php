@@ -9,7 +9,8 @@
  * Теперь разбор строгий: целое больше нуля либо строка из одних цифр без
  * ведущего нуля, всё прочее — пользователь по умолчанию.
  *
- * Плюс пути к логам: из них собирается и запись, и ссылка в меню.
+ * Плюс каталог логов: он обязан лежать вне корня сайта, а путь проекта из
+ * настроек принимается только абсолютный.
  */
 
 $root = dirname(__DIR__);
@@ -17,6 +18,8 @@ $root = dirname(__DIR__);
 require_once $root.'/tests/stub/autoload.php';
 require_once $root.'/tests/assert.php';
 
+use Bitrix\Main\Application;
+use Bitrix\Main\Config\Configuration;
 use Bitrix\Main\Config\Option;
 use Shef\Problems\Main\Constants;
 
@@ -92,11 +95,49 @@ foreach(array_keys($roles) as $code)
 
 Check::same('default_option.php знает все роли и даёт DEFAULT_USER_ID', $mismatch, []);
 
-Check::group('пути к логам');
+Check::group('каталог логов — вне корня сайта');
 
-\Bitrix\Main\Application::$documentRoot = '/var/www/portal';
+// Логи с трассировками и данными запросов не должны лежать там, откуда их
+// отдаёт веб-сервер. До 2.0.0 это был /local/sh_log — под корнем.
+Application::$documentRoot = '/home/bitrix/www';
+Check::same('BitrixVM: рядом с www', Constants::getLogDir(), '/home/bitrix/sh_log');
+Check::same('файл лога', Constants::getLogFullPath('log'), '/home/bitrix/sh_log/log.log');
+Check::same('каталог не под корнем сайта', str_starts_with(Constants::getLogDir().'/', Application::getDocumentRoot().'/'), false);
 
-Check::same('абсолютный', Constants::getLogFullPath('log'), '/var/www/portal/local/sh_log/log.log');
-Check::same('от корня сайта', Constants::getLogFullPath('log', false), '/local/sh_log/log.log');
+Application::$documentRoot = '/home/bitrix/www/';
+Check::same('слэш на конце корня не мешает', Constants::getLogDir(), '/home/bitrix/sh_log');
+
+Application::$documentRoot = '/www';
+Check::same('корень сайта в корне ФС — без двойного слэша', Constants::getLogDir(), '/sh_log');
+
+Application::$documentRoot = '';
+Check::same(
+	'корня сайта нет (CLI) — временный каталог, а не /sh_log',
+	Constants::getLogDir(),
+	rtrim(sys_get_temp_dir(), '/').'/sh_log'
+);
+
+Check::group('каталог логов из настроек проекта');
+
+Application::$documentRoot = '/home/bitrix/www';
+
+Configuration::$values[Constants::SETTINGS_KEY] = [Constants::SETTINGS_LOG_DIR => '/var/log/portal/'];
+Check::same('абсолютный путь проекта', Constants::getLogDir(), '/var/log/portal');
+
+$ignored = [];
+foreach(['logs', '../sh_log', '', '/', 42, null] as $value)
+{
+	Configuration::$values[Constants::SETTINGS_KEY] = [Constants::SETTINGS_LOG_DIR => $value];
+	if(Constants::getLogDir() !== '/home/bitrix/sh_log')
+	{
+		$ignored[] = var_export($value, true);
+	}
+}
+Check::same('не абсолютный путь — по умолчанию', $ignored, []);
+
+Configuration::$values[Constants::SETTINGS_KEY] = 'не массив';
+Check::same('ключ не массив — по умолчанию', Constants::getLogDir(), '/home/bitrix/sh_log');
+
+Configuration::$values = [];
 
 Check::finish();

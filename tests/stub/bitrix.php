@@ -188,10 +188,18 @@ namespace Bitrix\Main\Config
 				return new static();
 			}
 
-			/** Настройки ядра, /bitrix/.settings.php. Composer на стенде нет. */
+			/**
+			 * Настройки ядра — /bitrix/.settings.php и .settings_extra.php.
+			 * Пусто, пока тест не положит своё: Composer на стенде нет,
+			 * каталог логов — по умолчанию.
+			 *
+			 * @var array<string, mixed>
+			 */
+			public static array $values = [];
+
 			public static function getValue(string $name): mixed
 			{
-				return null;
+				return static::$values[$name] ?? null;
 			}
 
 			public function get(string $key): mixed
@@ -365,6 +373,29 @@ namespace Bitrix\Main\IO
 
 		class Directory
 		{
+			/** Как в ядре: каталог целиком, со всем содержимым. */
+			public static function deleteDirectory(string $path): void
+			{
+				if(!is_dir($path))
+				{
+					return;
+				}
+
+				foreach(scandir($path) ?: [] as $entry)
+				{
+					if('.' === $entry || '..' === $entry)
+					{
+						continue;
+					}
+
+					is_dir($path.'/'.$entry)
+						? static::deleteDirectory($path.'/'.$entry)
+						: unlink($path.'/'.$entry);
+				}
+
+				rmdir($path);
+			}
+
 			public function __construct(private readonly string $path) {}
 
 			public function getPath(): string
@@ -415,6 +446,11 @@ namespace Bitrix\Main\IO
 			public function putContents(mixed $data): int|false
 			{
 				return file_put_contents($this->path, (string)$data);
+			}
+
+			public static function deleteFile(string $path): bool
+			{
+				return is_file($path) && unlink($path);
 			}
 
 			public const REWRITE = 0;

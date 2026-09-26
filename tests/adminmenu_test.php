@@ -8,8 +8,9 @@
  *
  * * admin/menu.php отдаёт меню только администратору: в логах трассировки,
  *   пути и данные запросов;
- * * логи открываются через просмотр файлов fileman, а не прямой ссылкой на
- *   /local/sh_log — прямая ссылка работает, только если каталог открыт всем;
+ * * логи открываются страницей модуля /bitrix/admin/shef_problems_logs.php:
+ *   каталог логов вне корня сайта, ни прямая ссылка, ни файловый менеджер
+ *   до него не дотянутся;
  * * в меню есть каждый файловый логгер и каждый тип события;
  * * ссылка в perfmon — только если perfmon стоит.
  *
@@ -41,14 +42,6 @@ class CUser
 	}
 }
 
-class CSite
-{
-	public static function GetDefSite(): string
-	{
-		return 's1';
-	}
-}
-
 /** Подключить admin/menu.php так, как это делает ядро. */
 $includeMenu = static function(?CUser $user) use ($root): mixed
 {
@@ -67,9 +60,9 @@ $menu = $includeMenu(new CUser(true));
 Check::same('администратору — раздел', is_array($menu), true);
 Check::same('раздел в «Настройках»', $menu['parent_menu'] ?? null, 'global_menu_settings');
 
-Check::group('логи — через fileman');
+Check::group('логи — через страницу модуля');
 
-$menu = AdminMenu::build('ru', 's1');
+$menu = AdminMenu::build('ru');
 $urls = [];
 $walk = static function(array $items) use (&$walk, &$urls): void
 {
@@ -85,8 +78,11 @@ $walk = static function(array $items) use (&$walk, &$urls): void
 };
 $walk($menu['items']);
 
-$direct = array_values(array_filter($urls, static fn(string $url): bool => str_starts_with($url, Constants::getLogPath())));
-Check::same('прямых ссылок на файлы логов нет', $direct, []);
+$outside = array_values(array_filter(
+	$urls,
+	static fn(string $url): bool => str_contains($url, 'fileman') || str_contains($url, 'sh_log')
+));
+Check::same('ни файлового менеджера, ни путей к каталогу логов в ссылках', $outside, []);
 
 $logs = $menu['items'][0]['items'];
 $expectedFiles = array_merge(
@@ -95,7 +91,7 @@ $expectedFiles = array_merge(
 	['deprecations', 'exceptions', 'mailer']
 );
 $expectedUrls = array_map(
-	static fn(string $name): string => AdminMenu::getUrlLogFile($name, 'ru', 's1'),
+	static fn(string $name): string => AdminMenu::getUrlLogFile($name.'.log', 'ru'),
 	$expectedFiles
 );
 
@@ -106,10 +102,59 @@ Check::same(
 );
 Check::same(
 	'адрес просмотра файла',
-	AdminMenu::getUrlLogFile('log', 'ru', 's1'),
-	'/bitrix/admin/fileman_file_view.php?lang=ru&site=s1&path=%2Flocal%2Fsh_log%2Flog.log'
+	AdminMenu::getUrlLogFile('log.log', 'ru'),
+	'/bitrix/admin/shef_problems_logs.php?lang=ru&file=log.log'
 );
-Check::same('последний пункт — каталог логов', end($logs)['url'], AdminMenu::getUrlLogList('ru', 's1'));
+Check::same('последний пункт — все логи', end($logs)['url'], '/bitrix/admin/shef_problems_logs.php?lang=ru');
+
+// Имя из меню страница обязана принять: иначе пункт вёл бы в «файла нет».
+$rejected = array_values(array_filter(
+	$expectedFiles,
+	static fn(string $name): bool => !\Shef\Problems\Main\LogFiles::isValidName($name.'.log')
+));
+Check::same('страница логов принимает каждое имя из меню', $rejected, []);
+
+Check::group('страница логов раскладывается установщиком');
+
+$settings = require $root.'/.settings.php';
+$adminMap = array_values(array_filter(
+	$settings['installDir']['value'],
+	static fn(array $map): bool => $map['to'] === '/bitrix/admin'
+))[0] ?? [];
+
+Check::same(
+	'заглушка лежит в install/admin под тем именем, что в меню',
+	is_file($root.($adminMap['from'] ?? '').'/'.basename(AdminMenu::LOGS_PAGE)),
+	true
+);
+Check::same(
+	'удаление снимает ровно этот файл, а не /bitrix/admin',
+	$adminMap['customPathUnInstall'] ?? null,
+	[AdminMenu::LOGS_PAGE]
+);
+
+Check::group('страница логов на портале, обновлённом заменой файлов');
+
+// Установщик на таком портале не запускался — страницы нет. Меню её кладёт.
+$portal = sys_get_temp_dir().'/shef-problems-menu-'.getmypid();
+mkdir($portal.'/www/bitrix/admin', 0777, true);
+$target = $portal.'/www'.AdminMenu::LOGS_PAGE;
+
+Check::same('страницы нет — кладёт', AdminMenu::ensureLogsPage($portal.'/www', $root), true);
+Check::same('это заглушка модуля', (string)file_get_contents($target), (string)file_get_contents($root.'/install/admin/shef_problems_logs.php'));
+
+file_put_contents($target, 'своя версия проекта');
+Check::same('есть — не трогает', [AdminMenu::ensureLogsPage($portal.'/www', $root), (string)file_get_contents($target)], [true, 'своя версия проекта']);
+
+Check::same('нет /bitrix/admin — не создаёт его', AdminMenu::ensureLogsPage($portal.'/нет', $root), false);
+
+\Bitrix\Main\Application::$documentRoot = $portal.'/www';
+unlink($target);
+$includeMenu(new CUser(true));
+Check::same('admin/menu.php кладёт страницу сам', is_file($target), true);
+
+\Bitrix\Main\IO\Directory::deleteDirectory($portal);
+\Bitrix\Main\Application::$documentRoot = '';
 
 Check::group('журнал событий');
 
@@ -121,7 +166,7 @@ Check::same(
 	'/bitrix/admin/event_log.php?lang=ru&set_filter=Y&adm_filter_applied=0&find_type=audit_type_id&find_audit_type%5B0%5D=SH_PROBLEMS_SALE'
 );
 
-$withPerfmon = AdminMenu::build('ru', 's1', true)['items'][1]['items'];
+$withPerfmon = AdminMenu::build('ru', true)['items'][1]['items'];
 Check::same('с perfmon — плюс ошибки платёжных систем', count($withPerfmon), count($eventLog) + 1);
 
 ModuleManager::$installed = ['perfmon'];

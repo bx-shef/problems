@@ -21,7 +21,7 @@ require_once $root.'/tests/assert.php';
 \Bitrix\Main\Config\Configuration::$settings = require $root.'/.settings.php';
 
 $sandbox = sys_get_temp_dir().'/shef-problems-include-'.getmypid();
-\Bitrix\Main\Application::$documentRoot = $sandbox;
+\Bitrix\Main\Application::$documentRoot = $sandbox.'/www';
 
 // shef.options при подключении объявляет свои _log(), _log1(), _pr() — ровно
 // как на портале. Файл свой, с тем же function_exists, что и в настоящем:
@@ -67,17 +67,17 @@ Check::same('первый — массив', (string)$log->getParameters()[0]->g
 Check::same('второй — строка', (string)$log->getParameters()[1]->getType(), 'string');
 Check::same('оба со значением по умолчанию', $log->getNumberOfRequiredParameters(), 0);
 
-Check::group('_log и _log1 пишут в каталог логов модуля');
+Check::group('_log и _log1 пишут в каталог логов модуля — вне корня сайта');
 
 _log(['шаг' => 1], 'include-test');
 _log(['шаг' => 2], 'include-test');
-$file = $sandbox.'/local/sh_log/include-test.log';
+$file = $sandbox.'/sh_log/include-test.log';
 $text = is_file($file) ? (string)file_get_contents($file) : '';
 Check::same('_log дописывает', substr_count($text, '[шаг] =>'), 2);
 
 _log1(['первый' => 1], 'include-test1');
 _log1(['второй' => 2], 'include-test1');
-$text = (string)file_get_contents($sandbox.'/local/sh_log/include-test1.log');
+$text = (string)file_get_contents($sandbox.'/sh_log/include-test1.log');
 Check::same('_log1: первый вызов перезаписал, второй дописал', [str_contains($text, '[первый]'), str_contains($text, '[второй]')], [true, true]);
 
 Check::group('_pr экранирует');
@@ -90,10 +90,7 @@ Check::same('разметка из данных не проходит', str_cont
 
 // region Уборка ////
 unlink($optionsFunctions);
-array_map('unlink', glob($sandbox.'/local/sh_log/*') ?: []);
-rmdir($sandbox.'/local/sh_log');
-rmdir($sandbox.'/local');
-rmdir($sandbox);
+\Bitrix\Main\IO\Directory::deleteDirectory($sandbox);
 // endregion ////
 
 Check::finish();

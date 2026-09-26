@@ -102,27 +102,69 @@ class Constants
 	}
 
 	/**
-	 * Папка для хранения логов, от корня сайта.
+	 * Ключ в /bitrix/.settings.php (или .settings_extra.php), которым проект
+	 * задаёт свой каталог логов:
 	 *
-	 * ⚠ Каталог лежит под корнем сайта. Закройте его на веб-сервере — иначе
-	 * логи с трассировками и данными запросов скачает любой, кто знает адрес.
-	 * @see docs/security.md
-	 *
-	 * @return string
+	 *   'shef.problems' => ['value' => ['logDir' => '/var/log/portal'], 'readonly' => true],
 	 */
-	public static function getLogPath(): string
+	public const SETTINGS_KEY = 'shef.problems';
+	public const SETTINGS_LOG_DIR = 'logDir';
+
+	/**
+	 * Имя каталога логов по умолчанию — рядом с корнем сайта.
+	 */
+	public const LOG_DIR_NAME = 'sh_log';
+
+	/**
+	 * Каталог логов — абсолютный путь, ВНЕ корня сайта.
+	 *
+	 * По умолчанию — на уровень выше корня: при корне /home/bitrix/www это
+	 * /home/bitrix/sh_log. До 2.0.0 логи лежали в /local/sh_log, под корнем
+	 * сайта, и скачать их мог любой, кто угадал имя файла, — а имена
+	 * предсказуемы, в них трассировки и данные запросов. Вне корня сайта
+	 * веб-сервер их не отдаст, настраивать ничего не нужно.
+	 *
+	 * Проект может задать свой каталог — ключ SETTINGS_KEY в
+	 * /bitrix/.settings_extra.php. Принимается только абсолютный путь; что-то
+	 * другое — каталог по умолчанию: относительный путь зависел бы от текущего
+	 * каталога процесса, и агент писал бы в одно место, а страница — в другое.
+	 *
+	 * Корня сайта нет (CLI без DOCUMENT_ROOT) — временный каталог системы, а
+	 * не «/sh_log» в корне файловой системы.
+	 *
+	 * @see docs/security.md
+	 * @return string без «/» на конце
+	 */
+	public static function getLogDir(): string
 	{
-		return '/local/sh_log';
+		$settings = Config\Configuration::getValue(static::SETTINGS_KEY);
+		$custom = is_array($settings) ? ($settings[static::SETTINGS_LOG_DIR] ?? null) : null;
+
+		if(is_string($custom) && str_starts_with($custom, '/') && rtrim($custom, '/') !== '')
+		{
+			return rtrim($custom, '/');
+		}
+
+		$documentRoot = rtrim(str_replace('\\', '/', (string)Application::getDocumentRoot()), '/');
+		if($documentRoot === '')
+		{
+			return rtrim(str_replace('\\', '/', sys_get_temp_dir()), '/').'/'.static::LOG_DIR_NAME;
+		}
+
+		$parent = dirname($documentRoot);
+
+		return ($parent === '/' ? '' : $parent).'/'.static::LOG_DIR_NAME;
 	}
 
-	public static function getLogFullPath(string $name, bool $isAbsolute = true): string
+	/**
+	 * Полный путь к файлу лога: <каталог логов>/<имя>.log.
+	 *
+	 * @param string $name имя без .log
+	 * @return string
+	 */
+	public static function getLogFullPath(string $name): string
 	{
-		return sprintf(
-			'%s%s/%s.log',
-			$isAbsolute ? Application::getDocumentRoot() : '',
-			static::getLogPath(),
-			$name
-		);
+		return static::getLogDir().'/'.$name.'.log';
 	}
 
 	public static function getDefaultFormatter(): Formatter\FormatterInterface

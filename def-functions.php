@@ -7,7 +7,7 @@
  * из php_interface/def-functions.php главнее, затем этот файл, затем
  * shef.options. @see include.php
  *
- * Логи пишутся в каталог логов модуля — Constants::getLogPath().
+ * Логи пишутся в каталог логов модуля — Constants::getLogDir(), вне корня сайта.
  */
 
 use Bitrix\Main\Application;

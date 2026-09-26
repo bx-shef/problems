@@ -25,9 +25,11 @@ use Shef\Problems\Integration\Monolog\Handler\BitrixCEventLogHandler;
 use Shef\Problems\Integration\Monolog\Logger;
 use Shef\Problems\Main\Constants;
 
+// Корень сайта — www внутри песочницы: каталог логов лежит на уровень выше
+// корня, то есть тоже в песочнице.
 $sandbox = sys_get_temp_dir().'/shef-problems-eventlog-'.getmypid();
-mkdir($sandbox, 0777, true);
-\Bitrix\Main\Application::$documentRoot = $sandbox;
+mkdir($sandbox.'/www', 0777, true);
+\Bitrix\Main\Application::$documentRoot = $sandbox.'/www';
 
 Check::group('уровень Monolog -> SEVERITY журнала');
 
@@ -104,6 +106,7 @@ $record = CEventLog::$records[0] ?? [];
 Check::same('ниже уровня фабрики не пишется', count(CEventLog::$records), 1);
 Check::same('в журнале — тип от фабрики', $record['AUDIT_TYPE_ID'] ?? null, Constants::AuditTypeProduct);
 Check::same('файл лога назван по типу', is_file($file), true);
+Check::same('и лежит вне корня сайта', $file, $sandbox.'/sh_log/sh_problems_product.log');
 Check::same('в файле — сообщение', str_contains($text, 'Нет цены у товара'), true);
 Check::same('ответственный по умолчанию — из настроек', str_contains($text, '"assigned":17'), true);
 Check::same('класс записан', str_contains($text, 'Acme\\\\Catalog\\\\Import'), true);

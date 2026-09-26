@@ -20,15 +20,17 @@
 ## Предустановленные логгеры
 
 Сервисы `\Bitrix\Main\DI\ServiceLocator`, ключ `services` в `.settings.php`.
-Каждому соответствует случай enum `\Shef\Problems\Logger`.
+Каждому соответствует случай enum `\Shef\Problems\Logger`. Файлы — в каталоге
+логов `\Shef\Problems\Main\Constants::getLogDir()`, вне корня сайта: при корне
+`/home/bitrix/www` это `/home/bitrix/sh_log`, см. [security.md](security.md).
 
 | сервис | enum | уровень | куда |
 |---|---|---|---|
 | `shef.problems.pr.debug` | `Pr` | Debug | на экран, без оформления; только администратору |
 | `shef.problems.prHtml.debug` | `PrHtml` | Debug | на экран, с цветом по уровню; только администратору |
-| `shef.problems.log.debug` | `Log` | Debug | `/local/sh_log/log.log` |
-| `shef.problems.log1.debug` | `Log1` | Debug | `/local/sh_log/log1.log`, первая запись за запрос стирает файл |
-| `shef.problems.deprecations.alert` | `Deprecations` | Alert | `/local/sh_log/deprecations.log`, тоже стирается первой записью |
+| `shef.problems.log.debug` | `Log` | Debug | `log.log` |
+| `shef.problems.log1.debug` | `Log1` | Debug | `log1.log`, первая запись за запрос стирает файл |
+| `shef.problems.deprecations.alert` | `Deprecations` | Alert | `deprecations.log`, тоже стирается первой записью |
 | `shef.problems.factory.system.logger` | `Problems` | задаёт вызывающий | фабрика: файл по типу проблемы + журнал событий |
 
 Через enum:
@@ -56,7 +58,7 @@ $logger->info('Импорт начат');
 `\Shef\Problems\Factory\SystemLoggerFactory::build()` строит логгер, который
 пишет сразу:
 
-* в файл `/local/sh_log/<тип>.log`;
+* в файл `<тип>.log` в каталоге логов;
 * в журнал событий Битрикса с этим типом.
 
 В каждую запись добавляются модуль, класс и ответственный.
@@ -165,7 +167,7 @@ Telegram для важного:
 
 		return (new \Shef\Problems\Integration\Monolog\Logger('test'))
 			->pushHandler(new \Monolog\Handler\StreamHandler(
-				stream: \Bitrix\Main\Application::getDocumentRoot().'/local/sh_log/test.log',
+				stream: \Shef\Problems\Main\Constants::getLogFullPath('test'),
 				level: \Monolog\Level::Debug
 			))
 			->pushHandler(new \Monolog\Handler\TelegramBotHandler(

@@ -65,7 +65,7 @@ DOCUMENT_ROOT=/var/www/portal php examples/problems.php
 
 `problems.php` на портале пишет **по-настоящему**: одну запись в журнал событий
 (тип `SH_PROBLEMS_SYNC`, модуль `acme.exchange`) и строку в
-`/local/sh_log/sh_problems_sync.log`. Убирать их пример не станет — это и есть
+`sh_problems_sync.log` каталога логов (на BitrixVM — `/home/bitrix/sh_log`). Убирать их пример не станет — это и есть
 то, что потом ищут через меню «Учёт проблем». Без портала всё то же уходит во
 временный каталог и в заглушку журнала.
 

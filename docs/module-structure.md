@@ -27,6 +27,8 @@ Composer разворачивает в целевой каталог **коре�
 | `install/version.php` | SHIP | `VERSION` и `VERSION_DATE` — источник истины о версии |
 | `install/js/shef-problems/` | SHIP | стили вывода `PrHtml`; установщик раскладывает их в `/bitrix/js` |
 | `admin/menu.php` | SHIP | меню «Учёт проблем»; ядро подключает его само, из каталога модуля |
+| `admin/logs.php` | SHIP | страница просмотра логов; открывается заглушкой из `install/admin` |
+| `install/admin/` | SHIP | заглушка `shef_problems_logs.php`, установщик кладёт её в `/bitrix/admin` |
 | `.settings.php` | SHIP | зависимости, события, раскладка, сервисы-логгеры, откуда брать Monolog |
 | `include.php` | SHIP | точка входа: `def-functions.php`, потом `autoload.php` — порядок важен |
 | `autoload.php` | SHIP | подключает `shef.options` и регистрирует Monolog |

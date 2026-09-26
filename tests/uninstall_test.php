@@ -10,6 +10,8 @@
  * * savedata = Y оставляет настройки — уговор ядра.
  * * Регистрация обработчика shef.uiclear из 1.x снимается: замена файлов её
  *   не снимает, а в installEvents её больше нет.
+ * * Файлы: своя страница из /bitrix/admin уходит, а сам /bitrix/admin и чужие
+ *   расширения остаются; логи — данные проекта — не трогаются.
  *
  * Ядро подменяется заглушками, установщик подключается настоящий.
  */
@@ -138,6 +140,40 @@ Check::same(
 	in_array('shef.uiclear:onBitrixMenuExtInitTopPanelUserMenu -> Shef\\Problems\\Integration\\Shef\\UiClear\\Events::onBitrixMenuExtInitTopPanelUserMenu', $unregistered, true),
 	true
 );
+
+Check::group('файлы: своё уносим, чужое и логи — нет');
+
+// Портал в песочнице: корень сайта — www, каталог логов — рядом.
+$portal = sys_get_temp_dir().'/shef-problems-uninstall-'.getmypid();
+\Bitrix\Main\Application::$documentRoot = $portal.'/www';
+
+$touch = static function(string $path): void
+{
+	if(!is_dir(dirname($path)))
+	{
+		mkdir(dirname($path), 0777, true);
+	}
+	file_put_contents($path, 'x');
+};
+
+$touch($portal.'/www/bitrix/admin/shef_problems_logs.php');
+$touch($portal.'/www/bitrix/admin/settings.php');
+$touch($portal.'/www/bitrix/js/shef-problems/monolog-pr-html/style.css');
+$touch($portal.'/www/bitrix/js/main/core/core.js');
+$touch($portal.'/www/bitrix/images/shef.problems/docs/scr1.png');
+$touch($portal.'/sh_log/sh_problems_sync.log');
+
+$module = $given();
+Check::same('UnInstallFiles отработал', $module->UnInstallFiles(), true);
+
+Check::same('страница логов убрана', is_file($portal.'/www/bitrix/admin/shef_problems_logs.php'), false);
+Check::same('страницы ядра в /bitrix/admin на месте', is_file($portal.'/www/bitrix/admin/settings.php'), true);
+Check::same('стили модуля убраны', is_dir($portal.'/www/bitrix/js/shef-problems'), false);
+Check::same('чужие расширения на месте', is_file($portal.'/www/bitrix/js/main/core/core.js'), true);
+Check::same('скриншоты от 1.x убраны', is_dir($portal.'/www/bitrix/images/shef.problems'), false);
+Check::same('логи — данные проекта, остались', is_file($portal.'/sh_log/sh_problems_sync.log'), true);
+
+\Bitrix\Main\IO\Directory::deleteDirectory($portal);
 
 Check::group('заглушка для 1.x отвечает, а не падает');
 
