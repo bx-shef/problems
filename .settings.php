@@ -142,17 +142,6 @@ return [
 				'customPathUnInstall' => [],
 				'isNeedUnInstall' => true,
 			],
-			// Страница просмотра логов. В /bitrix/admin лежат файлы всех
-			// модулей, поэтому удаляем ровно свой файл, а не каталог.
-			[
-				'type' => 'admin',
-				'from' => '/install/admin',
-				'to' => '/bitrix/admin',
-				'customPathUnInstall' => [
-					'/bitrix/admin/shef_problems_logs.php',
-				],
-				'isNeedUnInstall' => true,
-			],
 		],
 		'readonly' => true,
 	],

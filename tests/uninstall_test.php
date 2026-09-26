@@ -10,8 +10,10 @@
  * * savedata = Y оставляет настройки — уговор ядра.
  * * Регистрация обработчика shef.uiclear из 1.x снимается: замена файлов её
  *   не снимает, а в installEvents её больше нет.
- * * Файлы: своя страница из /bitrix/admin уходит, а сам /bitrix/admin и чужие
- *   расширения остаются; логи — данные проекта — не трогаются.
+ * * Файлы ставятся из того каталога, где модуль стоит на самом деле, а не из
+ *   зашитого /bitrix/modules: модуль из /local/modules иначе не ставил ничего.
+ * * Удаление: своя заглушка страницы логов уходит, чужой файл на её месте,
+ *   сам /bitrix/admin и чужие расширения остаются; логи не трогаются.
  *
  * Ядро подменяется заглушками, установщик подключается настоящий.
  */
@@ -32,10 +34,14 @@ class CoreCalls
 
 	public static int $cacheCleaned = 0;
 
+	/** @var list<array{0: string, 1: string}> что установщик копировал */
+	public static array $copied = [];
+
 	public static function reset(): void
 	{
 		static::$unregistered = [];
 		static::$cacheCleaned = 0;
+		static::$copied = [];
 		EventManager::$unregistered = [];
 	}
 }
@@ -59,6 +65,13 @@ function UnRegisterModule(string $moduleId): void
 
 function RegisterModule(string $moduleId): void
 {
+}
+
+/** Копирование каталогов ядра: запоминаем откуда и куда. */
+function CopyDirFiles(string $from, string $to, bool $rewrite = true, bool $recursive = false): bool
+{
+	CoreCalls::$copied[] = [$from, $to];
+	return true;
 }
 
 $GLOBALS['APPLICATION'] = new class
@@ -141,37 +154,59 @@ Check::same(
 	true
 );
 
-Check::group('файлы: своё уносим, чужое и логи — нет');
+Check::group('установка файлов: из того каталога, где стоит модуль');
 
 // Портал в песочнице: корень сайта — www, каталог логов — рядом.
 $portal = sys_get_temp_dir().'/shef-problems-uninstall-'.getmypid();
 \Bitrix\Main\Application::$documentRoot = $portal.'/www';
 
-$touch = static function(string $path): void
+$touch = static function(string $path, string $content = 'x'): void
 {
 	if(!is_dir(dirname($path)))
 	{
 		mkdir(dirname($path), 0777, true);
 	}
-	file_put_contents($path, 'x');
+	file_put_contents($path, $content);
 };
 
-$touch($portal.'/www/bitrix/admin/shef_problems_logs.php');
 $touch($portal.'/www/bitrix/admin/settings.php');
-$touch($portal.'/www/bitrix/js/shef-problems/monolog-pr-html/style.css');
 $touch($portal.'/www/bitrix/js/main/core/core.js');
 $touch($portal.'/www/bitrix/images/shef.problems/docs/scr1.png');
 $touch($portal.'/sh_log/sh_problems_sync.log');
 
 $module = $given();
+Check::same('InstallFiles отработал', $module->InstallFiles(), true);
+
+// Каталог модуля берётся у самого установщика, а не зашитый /bitrix/modules:
+// модуль здесь лежит вне корня сайта-песочницы, и файлы всё равно нашлись.
+Check::same('стили разложены из каталога модуля', CoreCalls::$copied, [[$root.'/install/js', $portal.'/www/bitrix/js']]);
+
+$logsPage = $portal.'/www/bitrix/admin/'.\Shef\Problems\Main\AdminPage::FILE;
+Check::same(
+	'заглушка страницы логов ведёт в этот модуль',
+	(string)@file_get_contents($logsPage),
+	\Shef\Problems\Main\AdminPage::getContent($portal.'/www', $root)
+);
+
+Check::group('удаление файлов: своё уносим, чужое и логи — нет');
+
+$touch($portal.'/www/bitrix/js/shef-problems/monolog-pr-html/style.css');
+
+$module = $given();
 Check::same('UnInstallFiles отработал', $module->UnInstallFiles(), true);
 
-Check::same('страница логов убрана', is_file($portal.'/www/bitrix/admin/shef_problems_logs.php'), false);
+Check::same('своя заглушка страницы логов убрана', is_file($logsPage), false);
 Check::same('страницы ядра в /bitrix/admin на месте', is_file($portal.'/www/bitrix/admin/settings.php'), true);
 Check::same('стили модуля убраны', is_dir($portal.'/www/bitrix/js/shef-problems'), false);
 Check::same('чужие расширения на месте', is_file($portal.'/www/bitrix/js/main/core/core.js'), true);
 Check::same('скриншоты от 1.x убраны', is_dir($portal.'/www/bitrix/images/shef.problems'), false);
 Check::same('логи — данные проекта, остались', is_file($portal.'/sh_log/sh_problems_sync.log'), true);
+
+// Проект положил на место заглушки свой файл — удаление его не трогает.
+$touch($logsPage, '<?php // своя страница проекта');
+$module = $given();
+$module->UnInstallFiles();
+Check::same('чужой файл на месте заглушки не удалён', (string)file_get_contents($logsPage), '<?php // своя страница проекта');
 
 \Bitrix\Main\IO\Directory::deleteDirectory($portal);
 

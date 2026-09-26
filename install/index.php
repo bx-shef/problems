@@ -417,10 +417,32 @@ Class shef_problems
 		];
 	}
 	
-		public function InstallFiles(array $arParams = []): bool
+		/**
+	 * Каталог модуля — там, где он стоит на самом деле: /bitrix/modules или
+	 * /local/modules. Раньше здесь был зашитый /bitrix/modules, и модуль из
+	 * /local/modules при установке не копировал ничего.
+	 */
+	private function getModuleDir(): string
+	{
+		return dirname(__DIR__);
+	}
+	
+	/**
+	 * Заглушка страницы логов в /bitrix/admin. Не копируется, а пишется: путь
+	 * в ней зависит от того, где стоит модуль. Класс подключается явно — на
+	 * автозагрузку классов модуля в установщике полагаться нельзя.
+	 */
+	private function getAdminPage(): string
+	{
+		require_once $this->getModuleDir().'/lib/main/adminpage.php';
+		
+		return \Shef\Problems\Main\AdminPage::class;
+	}
+	
+	public function InstallFiles(array $arParams = []): bool
 	{
 		$docRoot = Application::getDocumentRoot();
-		$fromPath = $docRoot.'/bitrix/modules/'.$this->MODULE_ID;
+		$fromPath = $this->getModuleDir();
 		$toPath = $docRoot;
 		
 		foreach($this->getDirList() as $map)
@@ -432,6 +454,8 @@ Class shef_problems
 				true
 			);
 		}
+		
+		$this->getAdminPage()::install($docRoot, $this->getModuleDir());
 		
 		return true;
 	}
@@ -461,6 +485,9 @@ Class shef_problems
 		{
 			\Bitrix\Main\IO\Directory::deleteDirectory($toPath.$legacyPath);
 		}
+		
+		// Только свою заглушку: проект мог положить на её место свой файл.
+		$this->getAdminPage()::uninstall($docRoot, $this->getModuleDir());
 		
 		foreach($this->getDirList() as $map)
 		{
