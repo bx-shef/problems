@@ -2,6 +2,7 @@
 $MESS['shef.problems_TAB_DEF_NAME'] = 'Сотрудники';
 $MESS['shef.problems_TAB_DEF_TITLE'] = 'Сопоставление сотрудников с ролями';
 $MESS['shef.problems_TAB_DEF_SystemUserId'] = '[URL=/bitrix/admin/user_edit.php?lang=#LANG#&ID=#ID#]Служебный пользователь [id:#ID#][/URL]. Задается в модуле [URL=/bitrix/admin/settings.php?lang=#LANG#&mid=shef.options]shef.options[/URL].';
+$MESS['shef.problems_TAB_DEF_Logs'] = '[URL=#URL#]Логи модуля[/URL]. Каталог логов: #DIR# — вне корня сайта, веб-сервер его не отдаёт.';
 $MESS['shef.problems_TAB_DEF_defuserid'] = 'Сотрудник по умолчанию';
 $MESS['shef.problems_TAB_DEF_defuserid_descr'] = 'Ему будут поступать проблемы если не понятно на кого они адресованы.';
 $MESS['shef.problems_TAB_DEF_adminid'] = 'Администратор Б24';
