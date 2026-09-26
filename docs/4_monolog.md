@@ -1,235 +1,225 @@
-# Monolog
+# [`\Shef\Problems\Integration\Monolog`] Monolog
 
 ## Почитать
-* [monolog](https://github.com/Seldaek/monolog)
+
+* [Monolog](https://github.com/Seldaek/monolog)
 * [Логирование в распределенном php-приложении](https://habr.com/ru/post/456676/)
-* [Ведение журнала с PSR-3 для улучшения возможности повторного использования](https://coderlessons.com/articles/php/vedenie-zhurnala-s-psr-3-dlia-uluchsheniia-vozmozhnosti-povtornogo-ispolzovaniia)
+
+## Откуда берётся Monolog
+
+Из Composer проекта, если он там есть, иначе — из своей копии в
+`vendor/monolog/monolog` модуля. Решает `.settings.php` модуля через
+`ShProjectContext` из `shef.options`: если в vendor проекта Monolog лежит, своя
+копия не регистрируется. Без `shef.options` или при ошибке разбора
+`composer.json` проекта — своя копия.
+
+Версия своей копии обязана подходить под ограничение из `composer.json` модуля
+и не давать deprecation на поддерживаемых версиях PHP — сторожит
+`tests/vendor_test.php`.
 
 ## Предустановленные логгеры
-Реализованы через сервисы:
 
-|                                Сервис | Уровень логирования | Назначение                                                                                      |
-|--------------------------------------:|:--------------------|:------------------------------------------------------------------------------------------------|
-|              `shef.problems.pr.debug` | Level::Debug        | для вывода не отворматированного текста, в агента и тп использовать                             |
-|          `shef.problems.prHtml.debug` | Level::Debug        | для вывода отворматированного текста                                                            |
-|             `shef.problems.log.debug` | Level::Debug        | запись в лог отладки                                                                            |
-|            `shef.problems.log1.debug` | Level::Debug        | запись в лог отладки, при первом использовании файл будет удален и создан повторно              |
-|    `shef.problems.deprecations.alert` | Level::Alert        | запись в лог устаревания функций, которые будут удалены в будущей версии                        |
-| `shef.problems.factory.system.logger` | xx                  | фабрика создания логгера записи события в [\CEventLog](/bitrix/admin/event_log.php) и файл лога |
+Сервисы `\Bitrix\Main\DI\ServiceLocator`, ключ `services` в `.settings.php`.
+Каждому соответствует случай enum `\Shef\Problems\Logger`.
 
+| сервис | enum | уровень | куда |
+|---|---|---|---|
+| `shef.problems.pr.debug` | `Pr` | Debug | на экран, без оформления; только администратору |
+| `shef.problems.prHtml.debug` | `PrHtml` | Debug | на экран, с цветом по уровню; только администратору |
+| `shef.problems.log.debug` | `Log` | Debug | `/local/sh_log/log.log` |
+| `shef.problems.log1.debug` | `Log1` | Debug | `/local/sh_log/log1.log`, первая запись за запрос стирает файл |
+| `shef.problems.deprecations.alert` | `Deprecations` | Alert | `/local/sh_log/deprecations.log`, тоже стирается первой записью |
+| `shef.problems.factory.system.logger` | `Problems` | задаёт вызывающий | фабрика: файл по типу проблемы + журнал событий |
 
-Пример подключения
+Через enum:
+
 ```php
-<?php
-  \Bitrix\Main\Loader::includeModule('shef.problems');
-  $logger = \Bitrix\Main\DI\ServiceLocator::getInstance()->get('shef.problems.prHtml.debug');
-  $logger->debug('Test debug');
-  $logger->info('Test info');
-  $logger->error('Test error');
-?>
+\Bitrix\Main\Loader::includeModule('shef.problems');
+
+\Shef\Problems\Logger::PrHtml->getLogger()->debug('что пришло', ['fields' => $fields]);
 ```
 
-### Подключение через фабрику создания логгера записи события `shef.problems.factory.system.logger`
+Через сервис напрямую:
+
 ```php
-<?php
-  /** @var \Shef\Problems\Factory\SystemLoggerFactory $factory */
-  $factory = \Bitrix\Main\DI\ServiceLocator::getInstance()->get('shef.problems.factory.system.logger');
-  $logger = $factory::build(
-    logLevel: \Monolog\Level::Alert,
-    auditType: \Shef\Problems\Main\Constants::AuditTypeSync,
-    moduleId: 'shef.problems',
-    className: 'Test',
-    assigned: \Shef\Problems\Main\Constants::getAdminId(),
-  );
-  
-  $logger->debug('Не работает, тк в указали уровень Alert', ['_shef.problems.build.logger']);
-  $logger->alert('Работает', ['_shef.problems.build.logger']);
-?>
+$logger = \Bitrix\Main\DI\ServiceLocator::getInstance()->get('shef.problems.log.debug');
+$logger->info('Импорт начат');
 ```
 
-### Использование через enum [`\Shef\Problems\Logger`] 
+`Logger::Problems->getLogger()` бросает `LogicException`: это фабрика, а не
+логгер, её строят через трейт — ниже.
+
+## Проблемы: фабрика и трейт
+
+Проблема — запись, которую надо не только сохранить, но и найти потом в
+журнале событий по типу и понять, кому она адресована. Фабрика
+`\Shef\Problems\Factory\SystemLoggerFactory::build()` строит логгер, который
+пишет сразу:
+
+* в файл `/local/sh_log/<тип>.log`;
+* в журнал событий Битрикса с этим типом.
+
+В каждую запись добавляются модуль, класс и ответственный.
+
+Обычно фабрику напрямую не зовут, а подключают трейт
+`\Shef\Problems\Factory\Trait\LoggerProblems`:
+
 ```php
-<?php
-  \Bitrix\Main\Loader::includeModule('shef.problems');
-  \Shef\Problems\Logger::PrHtml->getLogger->debug('message', ['context']);
-?>
+\Bitrix\Main\Loader::includeModule('shef.problems');
+
+final class OrdersExchange
+{
+	use \Shef\Problems\Factory\Trait\LoggerProblems;
+
+	public function __construct()
+	{
+		$this->initLogger();
+	}
+
+	public static function getClassName(): string
+	{
+		return static::class;
+	}
+
+	public static function getModuleId(): string
+	{
+		return 'acme.exchange';
+	}
+
+	// Необязательное — умолчания: Info, SH_PROBLEMS_PROBLEM, «сотрудник по умолчанию».
+	protected static function getLogLevel(): \Monolog\Level
+	{
+		return \Monolog\Level::Error;
+	}
+
+	protected static function getAuditType(): string
+	{
+		return \Shef\Problems\Main\Constants::AuditTypeSync;
+	}
+
+	public static function getAssignedId(): int
+	{
+		return \Shef\Problems\Main\Constants::getSyncUserId();
+	}
+
+	public function run(): void
+	{
+		$this->logger->critical('1С не ответила за 30 секунд', ['itemId' => 1024]);
+	}
+}
 ```
 
-### Использование через `\Bitrix\Main\Diag\Logger::create`
-Вначале определяем в `\bitrix\.settings.php` или в `\bitrix\.settings_extra.php` ключ `'loggers'`
+Трейт `\Shef\Problems\Factory\Trait\DebuggerProblems` — то же для отладки: даёт
+`$this->debugger` на сервисе `shef.problems.prHtml.debug`.
+
+| что | где |
+|---|---|
+| `\Shef\Problems\Factory\SystemLoggerFactory::build` | фабрика проблем |
+| `\Shef\Problems\Factory\Trait\LoggerProblems::initLogger` | `$this->logger` на фабрике |
+| `\Shef\Problems\Factory\Trait\LoggerProblems::configureLogger` | подменить логгер снаружи — например, в тесте |
+| `\Shef\Problems\Factory\Trait\DebuggerProblems::initDebugger` | `$this->debugger` для отладки |
+| `\Shef\Problems\Main\Constants::getDefUserId` | ответственный по умолчанию, из настроек |
+
+Запускаемый пример — [examples/problems.php](../examples/problems.php).
+
+## Свои логгеры через `\Bitrix\Main\Diag\Logger::create`
+
+Ядро умеет создавать логгеры по имени из ключа `loggers` в
+`/bitrix/.settings.php` или `/bitrix/.settings_extra.php`. Логгеры модуля туда
+встают так:
+
 ```php
-<?php
 return [
-  'loggers' => [
-    'value' => [
-      'shef.problems.prHtml' => [
-        'constructor' => static function () {
-          if(in_array(
-            \Bitrix\Main\Loader::includeSharewareModule('shef.problems'),
-            [
-              \Bitrix\Main\Loader::MODULE_INSTALLED,
-              \Bitrix\Main\Loader::MODULE_DEMO,
-            ]
-          ))
-          {
-            return \Shef\Problems\Logger::PrHtml->getLogger();
-          }
-          
-          return null;
-        },
-      ],
-      'shef.problems.pr' => [
-        'constructor' => static function () {
-          if(in_array(
-            \Bitrix\Main\Loader::includeSharewareModule('shef.problems'),
-            [
-              \Bitrix\Main\Loader::MODULE_INSTALLED,
-              \Bitrix\Main\Loader::MODULE_DEMO,
-            ]
-          ))
-          {
-            return \Shef\Problems\Logger::Pr->getLogger();
-          }
-          
-          return null;
-        },
-      ],
-      'shef.problems.log' => [
-        'constructor' => static function () {
-          if(in_array(
-            \Bitrix\Main\Loader::includeSharewareModule('shef.problems'),
-            [
-              \Bitrix\Main\Loader::MODULE_INSTALLED,
-              \Bitrix\Main\Loader::MODULE_DEMO,
-            ]
-          ))
-          {
-            return \Shef\Problems\Logger::Log->getLogger();
-          }
-          
-          return null;
-        },
-      ],
-      'shef.problems.log1' => [
-        'constructor' => static function () {
-          if(in_array(
-            \Bitrix\Main\Loader::includeSharewareModule('shef.problems'),
-            [
-              \Bitrix\Main\Loader::MODULE_INSTALLED,
-              \Bitrix\Main\Loader::MODULE_DEMO,
-            ]
-          ))
-          {
-            return \Shef\Problems\Logger::Log1->getLogger();
-          }
-          
-          return null;
-        },
-      ],
-    ],
-    'readonly' => true
-  ]
+	'loggers' => [
+		'value' => [
+			'shef.problems.prHtml' => [
+				'constructor' => static function () {
+					if(!\Bitrix\Main\Loader::includeModule('shef.problems'))
+					{
+						return null;
+					}
+
+					return \Shef\Problems\Logger::PrHtml->getLogger();
+				},
+			],
+		],
+		'readonly' => true,
+	],
 ];
-?>
 ```
-
-Теперь можем вызывать через `\Bitrix\Main\Diag\Logger::create`
-
-Пример
-```php
-<?php
-  $logger = \Bitrix\Main\Diag\Logger::create('shef.problems.prHtml');
-  $logger?->debug('Diag\Logger message', ['_prHtml']);
-?>
-```
-
-### Собственные настройки
-Вначале определяем в `\bitrix\.settings.php` или в `\bitrix\.settings_extra.php` ключ `'loggers'`
-
-В примере указан логгер `test` с обработчиками:
-
-* запись событий уровня `\Monolog\Level::Debug` в файл `/local/log/test.log`
-* запись событий уровня `\Monolog\Level::Info` в файл Telegram (apiKey и channel нужно свои подставить)
 
 ```php
-<?php
-return [
-  'loggers' => [
-    'value' => [
-      'test' => [
-        'constructor' => static function () {
-          if(in_array(
-            \Bitrix\Main\Loader::includeSharewareModule('shef.problems'),
-            [
-              \Bitrix\Main\Loader::MODULE_INSTALLED,
-              \Bitrix\Main\Loader::MODULE_DEMO,
-            ]
-          ))
-          {
-            return (new \Shef\Problems\Integration\Monolog\Logger('test'))
-              ->pushHandler(
-                (new \Monolog\Handler\StreamHandler(
-                  stream: \Bitrix\Main\Application::getDocumentRoot().'/local/log/test.log',
-                  level: \Monolog\Level::Debug
-                ))
-              )
-              ->pushHandler(
-                (new \Monolog\Handler\TelegramBotHandler(
-                  apiKey: '1848526049:UNasdasd_DEMO',
-                  channel: '-300000001',
-                  level: \Monolog\Level::Info
-                ))
-              )
-            ;
-          }
-          
-          return null;
-        },
-      ],
-    ],
-    'readonly' => true
-  ]
-];
-?>
+\Bitrix\Main\Diag\Logger::create('shef.problems.prHtml')?->debug('сообщение', ['контекст']);
 ```
 
-Теперь можем вызывать через `\Bitrix\Main\Diag\Logger::create`
+Собственный логгер с любыми обработчиками Monolog — например, файл плюс
+Telegram для важного:
 
-Пример
 ```php
-<?php
-  $logger = \Bitrix\Main\Diag\Logger::create('test');
-  $logger?->debug('Запишет в файл', ['в телеграм НЕ ОТПРАВИТ']);
-  $logger?->info('Запишет в файл', ['в телеграм ОТПРАВИТ']);
-?>
+'test' => [
+	'constructor' => static function () {
+		if(!\Bitrix\Main\Loader::includeModule('shef.problems'))
+		{
+			return null;
+		}
+
+		return (new \Shef\Problems\Integration\Monolog\Logger('test'))
+			->pushHandler(new \Monolog\Handler\StreamHandler(
+				stream: \Bitrix\Main\Application::getDocumentRoot().'/local/sh_log/test.log',
+				level: \Monolog\Level::Debug
+			))
+			->pushHandler(new \Monolog\Handler\TelegramBotHandler(
+				apiKey: '<ключ бота>',
+				channel: '<id канала>',
+				level: \Monolog\Level::Info
+			));
+	},
+],
 ```
 
-## Обработчики
-* все из [monolog.handlers](https://github.com/Seldaek/monolog/blob/main/doc/02-handlers-formatters-processors.md#handlers)
-* доработанные [`\Shef\Problems\Integration\Monolog\Handler`]
+Ключ бота — секрет: держите его в `.settings_extra.php`, который не уезжает в
+репозиторий проекта.
 
-|                         Название | Описание                                                                                                                                                                                       |
-|---------------------------------:|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `Handler\BitrixCEventLogHandler` | для записи в [\CEventLog](/bitrix/admin/event_log.php).<br/>Настройка очистка журнала в главном модуле.<br/>Можно добавить [оповещения в админке Б24](/bitrix/admin/log_notification_edit.php) |
-|              `Handler\PrHandler` | для вывода на экран                                                                                                                                                                            |
-|          `Handler\PrHtmlHandler` | для HTML вывода на экран                                                                                                                                                                       |
-|            `Handler\Log1Handler` | для записи в файл с предварительной очисткой файла                                                                                                                                             |
+## Обработчики модуля
 
-## Логгер [`Shef\Problems\Integration\Monolog\Logger`]
-> Унаследован от `\Monolog\Logger`
+Все обработчики [Monolog](https://github.com/Seldaek/monolog/blob/main/doc/02-handlers-formatters-processors.md#handlers)
+плюс свои:
 
-Разрешает для функций логирования первым параметром предать следующие типы:
+| класс | что делает |
+|---|---|
+| Handler\BitrixCEventLogHandler | запись в журнал событий; уровень сопоставляется с важностью журнала, см. [уровни](3_loglevel.md) |
+| Handler\PrHandler | вывод на экран; по умолчанию только администратору; всё экранируется |
+| Handler\PrHtmlHandler | то же с оформлением; стили — расширение `shef-problems.monolog-pr-html` |
+| Handler\Log1Handler | файл, который первая запись за жизнь обработчика стирает |
+| Processor\TraceProcessor | трассировка в `extra.trace`: откуда позвали логгер или, для исключения, его трассировка |
+| Formatter\BitrixCEventLogFormatter | запись → описание для журнала; `itemId` и `moduleId` из контекста — в поля журнала |
 
-* \Throwable
-* \Bitrix\Main\Result
-* \Bitrix\Main\Error
-* array
-* \Bitrix\Main\Type\Contract\Arrayable
-* \Bitrix\Main\Type\Contract\Jsonable
-* \JsonSerializable
-* \Stringable
-* string
+**Вывод на экран экранируется.** В сообщение и контекст попадает что угодно, в
+том числе ввод посетителя, а смотрит на вывод администратор. До 2.0.0 это шло в
+страницу как есть.
 
-Через соответствующие стратегии `Shef\Problems\Integration\Monolog\Strategy\LoggerConverter\IStrategy` заворачивает в коректный формат
+**Трассировка начинается с места вызова**, где бы ни висел `TraceProcessor` —
+на обработчике или на логгере: кадры самого Monolog и слоя интеграции
+отрезаются по файлам, а не по счёту.
 
-[← Уровни логирования](docs/3_loglevel.md) | [↑ Содержание](README.md) | [Ротация логов →](docs/5_logrotate.md)
+## Логгер `\Shef\Problems\Integration\Monolog\Logger`
+
+Наследник `\Monolog\Logger`. Первым аргументом принимает не только строку:
+
+| что передали | сообщение | контекст |
+|---|---|---|
+| `\Throwable` | текст исключения | само исключение под `throwable` |
+| `\Bitrix\Main\Error` | текст и код | ошибка под `BitrixError` |
+| `\Bitrix\Main\Result` | `[Result::Error: N] первая ошибка` либо `[Result::Success]` | ошибки и данные под `BitrixResult` |
+| `\Bitrix\Main\Type\Contract\Arrayable` | `Arrayable` | `toArray()` под `_message` |
+| массив | `Array` | массив под `_message` |
+| `\Bitrix\Main\Type\Contract\Jsonable` | `Jsonable` | `toJson()` под `_message` |
+| `\JsonSerializable` | `JsonSerializable` | `jsonSerialize()` под `_message` |
+| строка, `\Stringable` | как есть | как передали |
+
+Остальное — `InvalidArgumentException`: лучше увидеть ошибку сразу, чем
+потерять запись молча. Превращения делают стратегии
+`\Shef\Problems\Integration\Monolog\Strategy\LoggerConverter\IStrategy`, по одной
+на тип. Запускаемый пример — [examples/logger.php](../examples/logger.php).
+
+[← Уровни логирования](3_loglevel.md) | [↑ Содержание](../README.md) | [Ротация логов →](5_logrotate.md)

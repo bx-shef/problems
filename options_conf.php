@@ -1,6 +1,5 @@
 <?php declare(strict_types=1);
 
-use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Shef\Options\Main\Options;
 use Shef\Problems\Main\Constants;
@@ -13,9 +12,11 @@ use Shef\Problems\Main\Constants;
  * Tab(prefix)->Option(code) ~> код свойства: prefix_code
  */
 
+// indexDoc больше не передаём: вкладка «Документация» ушла из shef.options в
+// 3.0.0 вместе с параметром, и именованный аргумент, которого нет, — это
+// Error «Unknown named parameter», то есть неоткрывающаяся страница настроек.
 $response = ShOptionsConfig::getInstance(
-	moduleId: 'shef.problems',
-	indexDoc: 'README.md'
+	moduleId: 'shef.problems'
 );
 if(!$response->isSuccess())
 {
@@ -104,6 +105,12 @@ $options->addTab(
 				])->setShowRows(1)
 		)
 );
+// ⚠ Вкладка GRP ниже выключена переключателем-комментарием: первая его
+// строка «слэш-звёздочка-слэш» открывает комментарий, последняя
+// «слэш-слэш-звёздочка-слэш» закрывает. Допишите слэш в начало первой — и
+// вкладка включится. Constants::getGroupIdTask() и getGroupIdIntegrateB24()
+// читают её опции и пока отдают умолчание. См. «Известные шероховатости»
+// в CLAUDE.md.
 /*/
 $options->addTab(
 	(new Options\Tab('GRP'))

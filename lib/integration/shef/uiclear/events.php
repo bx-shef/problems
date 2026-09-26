@@ -4,132 +4,33 @@ namespace Shef\Problems\Integration\Shef\UiClear;
 
 use Bitrix\Main\Event;
 use Bitrix\Main\EventResult;
-use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\Result;
-use Shef\Options\TraitList;
-use Shef\Problems\Logger;
 use Shef\Problems\Main\Constants;
 
-Loc::loadMessages(__FILE__);
-
 /**
- * Class Events
- * @package Shef\UiClear\Tools\Logs
+ * Заглушка для порталов, обновлённых с 1.x.
  *
- * Ссылки на логи
+ * До 2.0.0 модуль вешал пункты «Логи» и «Журналы» на верхнюю панель через
+ * событие shef.uiclear:onBitrixMenuExtInitTopPanelUserMenu. С 2.0.0 от
+ * shef.uiclear модуль не зависит, а пункты живут в меню административной
+ * части (admin/menu.php).
  *
- * @see \Shef\Problems\Logger
+ * Но регистрация обработчика в b_module_to_module при замене файлов модуля
+ * никуда не девается — её снимает только деинсталляция. Удали мы класс, и на
+ * портале, где shef.uiclear стоит, событие звало бы то, чего нет. Поэтому
+ * класс остаётся и честно отвечает «мне нечего добавить», а установщик
+ * снимает регистрацию при удалении (\shef_problems::getLegacyEventsList()).
+ *
+ * Удалять вместе со следующей мажорной версией, когда порталов на 1.x не
+ * останется.
  */
 class Events
 {
-	use TraitList\Events;
-	use TraitList\EventResponse;
-
-	protected static function getModuleId(): string
-	{
-		return Constants::MODULE_ID;
-	}
-
 	public static function onBitrixMenuExtInitTopPanelUserMenu(Event $event): EventResult
 	{
-		return static::returnMainEventSuccess(
-			(new Result())->setData([
-				'items' => [
-					[
-						'TITLE' => Loc::getMessage('SH_PROBLEMS_TOOLS_LOGS'),
-						'ITEMS' => static::getItemsLog(),
-						'IS_FOR_ADMIN' => true
-					],
-					[
-						'TITLE' => Loc::getMessage('SH_PROBLEMS_TOOLS_CEVENTS_LOG'),
-						'ITEMS' => static::getItemsCEvents(),
-						'IS_FOR_ADMIN' => true
-					]
-				]
-			]),
-			__FUNCTION__
-		);
-	}
-	
-	protected static function getItemsLog(): array
-	{
-		return array_merge(
-			array_merge(...array_map(
-				function(Logger $logger)
-				{
-					$result = [];
-					
-					if($logger === Logger::Problems)
-					{
-						foreach(Constants::getAuditTypeList() as $auditType)
-						{
-							$auditTypeName = ucwords(mb_strtolower($auditType));
-							
-							$result[] = [
-								'TITLE' => Loc::getMessage('SH_PROBLEMS_TOOLS_LOGS_FACTORY', [
-									'#LOGGER_NAME#' => $auditTypeName
-								]),
-								'ONCLICK' => 'window.open(\''.Constants::getLogFullPath(mb_strtolower($auditType), false).'\', \'_blank\');',
-							];
-						}
-					}
-					else
-					{
-						$result[] = [
-							'TITLE' => Loc::getMessage('SH_PROBLEMS_TOOLS_LOGS_FACTORY', [
-								'#LOGGER_NAME#' => $logger->name
-							]),
-							'ONCLICK' => 'window.open(\''.Constants::getLogFullPath(mb_strtolower($logger->name), false).'\', \'_blank\');',
-						];
-					}
-					
-					return $result;
-				},
-				Logger::getEnumUsedInterface(Constants::HandlerTypeFile)
-			)),
-			[
-				[
-					'TITLE' => Loc::getMessage('SH_PROBLEMS_TOOLS_LOGS_EXCEPTIONS'),
-					'ONCLICK' => 'window.open(\''.Manager::getUrlExceptions().'\', \'_blank\');',
-				],
-				[
-					'TITLE' => Loc::getMessage('SH_PROBLEMS_TOOLS_LOGS_EMAIL'),
-					'ONCLICK' => 'window.open(\''.Manager::getUrlEmail().'\', \'_blank\');',
-				],
-				[
-					'TITLE' => Loc::getMessage('SH_PROBLEMS_TOOLS_LOGS_LIST'),
-					'ONCLICK' => 'window.open(\''.Manager::getUrlList().'\', \'_blank\');',
-				],
-			],
-		);
-	}
-	
-	protected static function getItemsCEvents(): array
-	{
-		return array_merge(
-			array_map(
-				function(string $auditType)
-				{
-					$auditTypeName = ucwords(mb_strtolower(str_replace(
-						'SH_PROBLEMS_',
-						'',
-						$auditType
-					)));
-					return [
-						'TITLE' => Loc::getMessage('SH_PROBLEMS_TOOLS_CEVENTS_LOG_FACTORY', [
-							'#LOGGER_NAME#' => $auditTypeName
-						]),
-						'ONCLICK' => 'window.open(\''.Manager::getUrlCEventsLog($auditType).'\', \'_blank\');',
-					];
-				},
-				Constants::getAuditTypeList()
-			),
-			[
-				[
-					'TITLE' => Loc::getMessage('SH_PROBLEMS_TOOLS_TBL_SALE_PAY_SYSTEM_ERR_LOG'),
-					'ONCLICK' => 'window.open(\''.Manager::getUrlSalePaymentErrorLog().'\', \'_blank\');',
-				],
-			]
+		return new EventResult(
+			EventResult::UNDEFINED,
+			null,
+			Constants::MODULE_ID
 		);
 	}
 }

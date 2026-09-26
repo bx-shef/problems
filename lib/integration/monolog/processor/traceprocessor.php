@@ -52,8 +52,7 @@ class TraceProcessor
 		}
 		else
 		{
-			$this->traceList = (new Exception())->getTrace();
-			$this->traceList = array_slice($this->traceList, 6);
+			$this->traceList = static::skipLoggerFrames((new Exception())->getTrace());
 		}
 		
 		$this->traceList = array_map(function(array $trace){
@@ -70,6 +69,61 @@ class TraceProcessor
 			$this->traceList
 		);
 		unset($index);
+	}
+	
+	/**
+	 * Отрезает кадры самого логгера: первым остаётся тот, кто позвал логгер.
+	 *
+	 * Раньше здесь стояло array_slice(..., 6) — глубина вызова от точки
+	 * «$logger->debug()» до процессора, повешенного на ОБРАБОТЧИК. Повесь
+	 * процессор на логгер (pushProcessor у Logger), позови через log() или
+	 * через обёртку — глубина другая, и трассировка начиналась бы то с
+	 * внутренностей Monolog, то с середины вызывающего кода.
+	 *
+	 * Поэтому режем по месту вызова, а не по счёту: пропускаем кадры, вызванные
+	 * из файлов Monolog и из слоя Integration\Monolog модуля. Каталог Monolog
+	 * берётся у настоящего класса — он разный для Composer и для своей копии.
+	 *
+	 * @param array[] $trace
+	 * @return array[]
+	 */
+	protected static function skipLoggerFrames(array $trace): array
+	{
+		$dirs = array_map(
+			static fn(string $dir): string => str_replace('\\', '/', $dir).'/',
+			[
+				dirname((string)(new \ReflectionClass(\Monolog\Logger::class))->getFileName()),
+				dirname(__DIR__),
+			]
+		);
+		
+		$isLoggerFrame = static function(array $frame) use ($dirs): bool
+		{
+			$file = str_replace('\\', '/', (string)($frame['file'] ?? ''));
+			if($file === '')
+			{
+				return false;
+			}
+			
+			foreach($dirs as $dir)
+			{
+				if(str_starts_with($file, $dir))
+				{
+					return true;
+				}
+			}
+			
+			return false;
+		};
+		
+		$index = 0;
+		$count = count($trace);
+		while($index < $count && $isLoggerFrame($trace[$index]))
+		{
+			$index++;
+		}
+		
+		return array_values(array_slice($trace, $index));
 	}
 	
 	protected function makeStackTraces(): array

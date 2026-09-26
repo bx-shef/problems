@@ -1,5 +1,4 @@
-<?php
-declare(strict_types=1);
+<?php declare(strict_types=1);
 
 namespace Shef\Problems\Main;
 
@@ -95,20 +94,22 @@ class Utils
 	): array
 	{
 		// region Cache ////
-		static $list;
+		/**
+		 * Кеш на время запроса. Имя не $list намеренно: ниже по методу $list
+		 * был и временным списком разделов, и каждый вызов затирал кеш
+		 * целиком, а чтение $list[$userId] без проверки давало на PHP 8
+		 * «Undefined array key».
+		 */
+		static $cache = [];
 
-		if(null === $list)
-		{
-			$list = [];
-		}
 		if($clearCache)
 		{
-			$list[$userId] = null;
+			unset($cache[$userId]);
 		}
 
-		if(null !== $list[$userId])
+		if(isset($cache[$userId]))
 		{
-			return $list[$userId];
+			return $cache[$userId];
 		}
 		// endregion ////
 
@@ -217,7 +218,7 @@ class Utils
 		}
 		// endregion ////
 
-		$list[$userId] = $result;
-		return $list[$userId];
+		$cache[$userId] = $result;
+		return $cache[$userId];
 	}
 }

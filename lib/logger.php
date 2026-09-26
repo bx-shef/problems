@@ -2,7 +2,6 @@
 
 namespace Shef\Problems;
 
-
 use InvalidArgumentException;
 use LogicException;
 use Psr\Container\NotFoundExceptionInterface;
@@ -12,6 +11,13 @@ use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\Config;
 use Shef\Problems\Main\Constants;
 
+/**
+ * Предустановленные логгеры модуля.
+ *
+ * Каждый случай — сервис из .settings.php (ключ services); сверяет
+ * tests/settings_test.php. Logger::Problems — не логгер, а фабрика: его
+ * строят через трейт Factory\Trait\LoggerProblems.
+ */
 enum Logger
 {
 	case Pr;
@@ -38,20 +44,20 @@ enum Logger
 			return [];
 		}
 		
-		return array_filter(
+		return array_values(array_filter(
 			self::cases(),
 			function(Logger $logger)
 			use ($handlerType, $services)
 			{
-				$service = $services[$logger->getServiceName()];
+				$service = $services[$logger->getServiceName()] ?? [];
 				if(empty($service['handlerType']) || !is_array($service['handlerType']))
 				{
 					return false;
 				}
 				
-				return in_array($handlerType, $service['handlerType']);
+				return in_array($handlerType, $service['handlerType'], true);
 			}
-		);
+		));
 	}
 	
 	public function getServiceName(): string
@@ -66,7 +72,8 @@ enum Logger
 			Logger::Deprecations => 'shef.problems.deprecations.alert',
 		};
 	}
-	// region ProblemsFactory\ILoggerFactory ////
+	// endregion ////
+	
 	
 	/**
 	 * Возвращает логгер
@@ -83,7 +90,6 @@ enum Logger
 		{
 			throw new LogicException('For Logger::Problems need use self function. See Shef\Problems\Factory\Trait\LoggerProblems');
 		}
-		
 		
 		$serviceLocator = DI\ServiceLocator::getInstance();
 		$serviceName = $this->getServiceName();

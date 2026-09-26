@@ -7,6 +7,14 @@ use Monolog\Level;
 use Monolog\LogRecord;
 use Bitrix\Main\Engine;
 
+/**
+ * Выводит запись на экран. По умолчанию — только администратору.
+ *
+ * Всё, что пришло из записи, экранируется: в сообщение и контекст попадает
+ * что угодно, в том числе ввод пользователя, а вывод идёт прямо в страницу.
+ * Без экранирования это хранимый XSS в браузере администратора — ровно того,
+ * кому вывод и показывают.
+ */
 class PrHandler
 	extends AbstractProcessingHandler
 {
@@ -14,7 +22,7 @@ class PrHandler
 	{
 		return PHP_EOL;
 	}
-	
+
 	public function __construct(
 		public readonly bool $isShowForAll = false,
 		int|string|Level $level = Level::Debug,
@@ -23,70 +31,77 @@ class PrHandler
 	{
 		parent::__construct($level, $bubble);
 	}
-	
+
 	protected function write(LogRecord $record): void
 	{
 		if(!$this->isStart())
 		{
 			return;
 		}
-		
+
 		echo $this->makeWrite($record);
 	}
-	
+
 	protected function isStart(): bool
 	{
-		if(!(
-			Engine\CurrentUser::get()->isAdmin()
-			|| $this->isShowForAll
-		))
+		if($this->isShowForAll)
 		{
-			return false;
+			return true;
 		}
-		
-		return true;
+
+		return Engine\CurrentUser::get()->isAdmin() === true;
 	}
-	
+
 	protected function makeWrite(LogRecord $record): string
 	{
 		return $this->makeContent($record);
 	}
-	
+
 	protected function makeContent(LogRecord $record): string
 	{
 		return
 			$this->makeStackTraces($record)
 			.$this->makeInfo($record);
 	}
-	
+
+	/**
+	 * Трассировку кладёт TraceProcessor. Без него ключа нет вовсе, и это не
+	 * ошибка: обработчик можно собрать и без трассировки.
+	 */
 	protected function makeStackTraces(LogRecord $record): string
 	{
-		$list = $record->extra['trace'] ?: '';
+		$list = $record->extra['trace'] ?? '';
 		if(is_string($list))
 		{
-			return $list;
+			return static::escape($list);
 		}
 		elseif(is_array($list))
 		{
-			return join(static::getSeparator(), $list);
+			return join(
+				static::getSeparator(),
+				array_map(
+					static fn(mixed $line): string => static::escape((string)$line),
+					$list
+				)
+			);
 		}
-		
+
 		return '';
 	}
-	
+
 	protected function makeInfo(LogRecord $record): string
 	{
 		return sprintf(
 			'<pre>%s</pre>',
-			print_r($this->prepareRecordInfo($record), true)
+			static::escape(print_r($this->prepareRecordInfo($record), true))
 		);
 	}
-	
+
 	protected function prepareRecordInfo(LogRecord $record): array
 	{
 		$extra = $record->extra;
 		unset($extra['trace']);
-		
+
 		return [
 			'title' => sprintf(
 				'%s >> [%s %s] >> %s',
@@ -98,5 +113,10 @@ class PrHandler
 			'context' => $record->context,
 			'extra' => $extra,
 		];
+	}
+
+	protected static function escape(string $value): string
+	{
+		return htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 	}
 }

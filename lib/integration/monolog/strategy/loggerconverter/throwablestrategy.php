@@ -4,7 +4,6 @@ namespace Shef\Problems\Integration\Monolog\Strategy\LoggerConverter;
 
 use InvalidArgumentException;
 use Throwable;
-use Shef\Problems\Main\Utils;
 
 class ThrowableStrategy
 	implements IStrategy
@@ -18,10 +17,12 @@ class ThrowableStrategy
 			return;
 		}
 		
+		// get_debug_type, а не Utils::getAllParents(): тот принимает только
+		// объект, и на строке вместо внятного InvalidArgumentException
+		// вылетал бы TypeError из самой проверки.
 		throw new InvalidArgumentException(sprintf(
-			'$message has wrong type %s: %s',
-			gettype($message),
-			Utils::getAllParents($message)
+			'$message has wrong type %s',
+			get_debug_type($message)
 		));
 	}
 	

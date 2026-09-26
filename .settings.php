@@ -3,22 +3,18 @@
 /**
  * Настраиваемые параметры модуля
  *
- * * requireModules -> обязательные модулей
+ * * requireModules -> обязательные модули
  * * requirePhpExt -> обязательные расширения PHP
  * * registerAutoLoadClasses -> авто подгрузка классов
  * * registerNamespace -> авто подгрузка Namespace
  * * options -> опции устанавливаемые через окружение
  * * installEvents -> события для установки
  * * installDir -> пути установки файлов
+ * * services -> сервисы для \Bitrix\Main\DI\ServiceLocator
  * * controllers -> контроллеры для ajax
- * * ui.entity-selector -> провайдер для диалога выбора сущностей
- * * intranet.customSection -> указывает провайдер страниц левого меню Если нужно использовать из другого модуля - то в installLeftMenu[] указываем moduleId
- * * installLeftMenu -> разделы и страницы в левом меню
  *
- * @memo installLeftMenu[].pages[].settingsRow не серилизовать.
- * @memo installLeftMenu[].code и installLeftMenu[].pages[].code писать без разделителей
- * @memo installLeftMenu[].pages[].settingsRow первый параметр компонет. Остальное смотреть в контроллере intranet.customSection
- *
+ * Классы самого модуля (Shef\Problems\...) в registerNamespace не нужны:
+ * ядро отображает их в lib/ по соглашению. Там только чужие — Monolog.
  */
 
 use Monolog\Level as MonologLevel;
@@ -30,16 +26,65 @@ use Shef\Problems\Integration\Monolog\Handler;
 use Shef\Problems\Integration\Monolog\Processor;
 use Shef\Problems\Main\Constants;
 
-if(!Loader::includeModule('shef.options'))
+// region Monolog: Composer проекта либо своя копия ////
+/**
+ * Monolog приезжает двумя путями, и оба оставлены сознательно:
+ *
+ * * через Composer — пакет bxshef/problems требует monolog/monolog, и тот
+ *   ложится в vendor проекта;
+ * * своей копией в vendor/ модуля — для установки архивом, без Composer.
+ *
+ * Какой из двух подключать, решает ShProjectContext из shef.options: если в
+ * vendor проекта Monolog есть, свою копию не регистрируем, классы даст
+ * автозагрузчик Composer. Если нет — регистрируем свою.
+ *
+ * Путь модуля считается от корня сайта, потому что autoload.php приклеивает
+ * к нему DOCUMENT_ROOT: модуль может стоять и в /bitrix/modules, и в
+ * /local/modules.
+ *
+ * Без shef.options (не поставлен, сломан) или при ошибке разбора
+ * composer.json проекта — своя копия: модулю без логгера хуже, чем
+ * логгеру из собственного vendor.
+ */
+$shProblemsNamespaces = (static function(): array
 {
-	return [];
-}
+	$monologPath = '/monolog/monolog/src/Monolog';
+
+	$documentRoot = rtrim(str_replace('\\', '/', (string)Loader::getDocumentRoot()), '/');
+	$moduleDir = str_replace('\\', '/', __DIR__);
+	$modulePath = ($documentRoot !== '' && str_starts_with($moduleDir, $documentRoot.'/'))
+		? mb_substr($moduleDir, mb_strlen($documentRoot))
+		: '/bitrix/modules/shef.problems';
+
+	$own = [
+		'Monolog' => $modulePath.'/vendor'.$monologPath,
+	];
+
+	$contextFile = Loader::getLocal('modules/shef.options/project-context.php');
+	if(!is_string($contextFile) || !is_file($contextFile))
+	{
+		return $own;
+	}
+
+	try
+	{
+		require_once $contextFile;
+
+		return (new \ShProjectContext($modulePath))
+			->addNamespace(new \ShProjectNamespaceComposer('Monolog', $monologPath))
+			->getNamespaceList();
+	}
+	catch(\Throwable $throwable)
+	{
+		return $own;
+	}
+})();
+// endregion ////
 
 return [
 	'requireModules' => [
 		'value' => [
 			'shef.options',
-			'shef.uiclear',
 		],
 		'readonly' => true,
 	],
@@ -52,10 +97,7 @@ return [
 		'readonly' => true,
 	],
 	'registerNamespace' => [
-		'value' => [
-			'Shef\\Problems' => '/bitrix/modules/shef.problems/lib',
-			'Monolog' => '/bitrix/modules/shef.problems/vendor/monolog/monolog/src/Monolog',
-		],
+		'value' => $shProblemsNamespaces,
 		'readonly' => true,
 	],
 	'options' => [
@@ -89,18 +131,6 @@ return [
 					'function' => 'onEventLogGetAuditTypes'
 				]
 			],
-			[
-				'isCompatible' => false,
-				'from' => [
-					'module' => 'shef.uiclear',
-					'event' => 'onBitrixMenuExtInitTopPanelUserMenu'
-				],
-				'to' => [
-					'module' => 'shef.problems',
-					'class' => '\Shef\Problems\Integration\Shef\UiClear\Events',
-					'function' => 'onBitrixMenuExtInitTopPanelUserMenu'
-				]
-			],
 		],
 		'readonly' => true,
 	],
@@ -110,13 +140,6 @@ return [
 				'type' => 'js',
 				'from' => '/install/js',
 				'to' => '/bitrix/js',
-				'customPathUnInstall' => [],
-				'isNeedUnInstall' => true,
-			],
-			[
-				'type' => 'images',
-				'from' => '/install/images',
-				'to' => '/bitrix/images',
 				'customPathUnInstall' => [],
 				'isNeedUnInstall' => true,
 			],
@@ -215,7 +238,9 @@ return [
 		'readonly' => true,
 	],
 	'controllers' => [
-		'value' => [],
+		'value' => [
+			'namespaces' => [],
+		],
 		'readonly' => true,
 	]
 ];
