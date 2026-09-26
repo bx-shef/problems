@@ -28,7 +28,7 @@
 |---|---|---|---|
 | `shef.problems.pr.debug` | `Pr` | Debug | на экран, без оформления; только администратору |
 | `shef.problems.prHtml.debug` | `PrHtml` | Debug | на экран, с цветом по уровню; только администратору |
-| `shef.problems.log.debug` | `Log` | Debug | `log.log` |
+| `shef.problems.log.debug` | `Log` | Debug | `log.log`, потолок 20 МБ — дальше прежний файл уходит в `log.log.1` |
 | `shef.problems.log1.debug` | `Log1` | Debug | `log1.log`, первая запись за запрос стирает файл |
 | `shef.problems.deprecations.alert` | `Deprecations` | Alert | `deprecations.log`, тоже стирается первой записью |
 | `shef.problems.factory.system.logger` | `Problems` | задаёт вызывающий | фабрика: файл по типу проблемы + журнал событий |
@@ -193,6 +193,7 @@ Telegram для важного:
 | Handler\PrHandler | вывод на экран; по умолчанию только администратору; всё экранируется |
 | Handler\PrHtmlHandler | то же с оформлением; стили — расширение `shef-problems.monolog-pr-html` |
 | Handler\Log1Handler | файл, который первая запись за жизнь обработчика стирает |
+| Handler\CappedStreamHandler | файл с потолком размера: перерос — откладывается в `<имя>.1`, пишется новый |
 | Processor\TraceProcessor | трассировка в `extra.trace`: откуда позвали логгер или, для исключения, его трассировка |
 | Formatter\BitrixCEventLogFormatter | запись → описание для журнала; `itemId` и `moduleId` из контекста — в поля журнала |
 

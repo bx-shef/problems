@@ -42,6 +42,12 @@ class Utils
 	 * Если установлен модуль bizproc -> считает через его калькулятор
 	 * Если нет, то просто добавим дни
 	 *
+	 * Калькулятор бизнес-процессов — не публичный API, и на свежих ядрах он
+	 * ломался: в рабочей копии 1.1.8 метод из-за этого свели к голому
+	 * $date->add(), и рабочие дни считаться перестали везде. Здесь иначе:
+	 * калькулятор пробуем, а упал или вернул не дату — прибавляем
+	 * календарные дни. Выходные тогда не учтены, но дата есть.
+	 *
 	 * @param Type\Date $date
 	 * @param string $interval -> 2D
 	 * @return Type\Date
@@ -63,11 +69,23 @@ class Utils
 		}
 
 		$formatDate = 'd.m.Y';
-		$response = (new CBPCalc(
-			(new BizProc\EmptyActivity('emptyActivity')))
-		)->Calculate('=workdateadd("'.$date->format($formatDate).'","'.$interval.'")');
-
-		return new Type\Date($response, $formatDate);
+		try
+		{
+			$response = (new CBPCalc(
+				(new BizProc\EmptyActivity('emptyActivity')))
+			)->Calculate('=workdateadd("'.$date->format($formatDate).'","'.$interval.'")');
+			
+			if(is_string($response) && $response !== '')
+			{
+				return new Type\Date($response, $formatDate);
+			}
+		}
+		catch(\Throwable $throwable)
+		{
+			// Калькулятор не справился — ниже календарные дни.
+		}
+		
+		return $date->add($interval);
 	}
 
 	/**

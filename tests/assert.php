@@ -22,6 +22,15 @@ final class Check
 	{
 		set_error_handler(static function(int $level, string $message, string $file, int $line): bool
 		{
+			// Заглушённое «@» — не провал: обработчик зовётся и для него, а
+			// error_reporting() в этот момент не содержит уровня ошибки. Так
+			// делает и ядро. Нашлось на Monolog: @fileinode() на файле, который
+			// только что переименовали, — это его штатная проверка.
+			if(!(error_reporting() & $level))
+			{
+				return false;
+			}
+
 			throw new ErrorException($message, 0, $level, $file, $line);
 		});
 	}
