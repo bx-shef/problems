@@ -159,4 +159,27 @@ Check::same('пишут в журнал событий', $names(LoggerEnum::getE
 Check::throws('незнакомый тип обработчика', InvalidArgumentException::class, fn() => LoggerEnum::getEnumUsedInterface('telegram'));
 Check::throws('Problems — фабрика, а не логгер', LogicException::class, fn() => LoggerEnum::Problems->getLogger());
 
+Check::group('отладочный лог и файлы проблем — с потолком размера');
+
+// Решение владельца: debug-лог рос без предела и забивал диск. Замена на
+// голый StreamHandler прошла бы незамеченной — тест держит класс и потолок.
+$capped = static function(array $handlers): ?int
+{
+	foreach($handlers as $handler)
+	{
+		if($handler instanceof Shef\Problems\Integration\Monolog\Handler\CappedStreamHandler)
+		{
+			return $handler->maxBytes;
+		}
+	}
+
+	return null;
+};
+Check::same('сервис Log — CappedStreamHandler на 20 МБ', $capped(LoggerEnum::Log->getLogger()->getHandlers()), 20 * 1024 * 1024);
+Check::same(
+	'фабрика проблем — CappedStreamHandler на 20 МБ',
+	$capped(Shef\Problems\Factory\SystemLoggerFactory::build(Level::Debug)->getHandlers()),
+	20 * 1024 * 1024
+);
+
 Check::finish();

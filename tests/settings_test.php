@@ -110,6 +110,44 @@ Check::same(
 	'/bitrix/modules/shef.problems/vendor/monolog/monolog/src/Monolog'
 );
 
+Check::group('registerNamespace — shef.options решает, Composer или своя копия');
+
+// Настоящий project-context.php из shef.options (копия в tests/stub/): тест
+// держит рабочую ветку, а не только запасные. Замена на «всегда своя копия»
+// дала бы на проекте с Composer два Monolog.
+Application::$documentRoot = dirname($root);
+Loader::$local['modules/shef.options/project-context.php'] = $root.'/tests/stub/project-context.php';
+
+$project = sys_get_temp_dir().'/shef-problems-composer-'.getmypid();
+register_shutdown_function(static fn() => exec('rm -rf '.escapeshellarg($project)));
+mkdir($project.'/vendor', 0777, true);
+file_put_contents($project.'/composer.json', '{}');
+
+/** Что решит .settings.php при данной настройке Composer в ядре. */
+$decide = static function(?array $composer) use ($root): array
+{
+	// ShComposerContext — синглтон: каждый случай читает настройки заново.
+	(new ReflectionProperty(ShComposerContext::class, 'instances'))->setValue(null, []);
+	\Bitrix\Main\Config\Configuration::$values = null === $composer ? [] : ['composer' => $composer];
+
+	return (require $root.'/.settings.php')['registerNamespace']['value'];
+};
+
+require_once $root.'/tests/stub/project-context.php';
+$own = [
+	'Monolog' => '/'.basename($root).'/vendor/monolog/monolog/src/Monolog',
+];
+
+Check::same('Composer на проекте нет — своя копия', $decide(null), $own);
+Check::same('Composer есть, Monolog в нём нет — своя копия', $decide(['config_path' => $project.'/composer.json']), $own);
+
+mkdir($project.'/vendor/monolog/monolog/src/Monolog', 0777, true);
+Check::same('Monolog в vendor проекта — своя копия не регистрируется', $decide(['config_path' => $project.'/composer.json']), []);
+
+\Bitrix\Main\Config\Configuration::$values = [];
+(new ReflectionProperty(ShComposerContext::class, 'instances'))->setValue(null, []);
+Loader::$local = [];
+
 Application::$documentRoot = dirname($root);
 $settings = require $root.'/.settings.php';
 

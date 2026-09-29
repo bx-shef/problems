@@ -76,6 +76,16 @@ Check::same('ссылка с именем лога, ведущая к настр
 Check::same('ссылка в соседний каталог sh_log-old', $files->resolve('neighbour.log'), null);
 Check::same('выход наверх', $files->resolve('../www/bitrix/.settings.php'), null);
 Check::same('файла нет', $files->resolve('missing.log'), null);
+Check::same('файл есть, но имя не лога', $files->resolve('notes.txt'), null);
+mkdir($dir.'/folder.log');
+Check::same('каталог с именем лога', $files->resolve('folder.log'), null);
+rmdir($dir.'/folder.log');
+
+// Каталог логов сам — ссылка: префикс сверяется с разрешённым каталогом, иначе
+// не нашлось бы ни одного файла.
+symlink($dir, $sandbox.'/sh_log-link');
+Check::same('каталог логов — ссылка: свой файл находится', (new LogFiles($sandbox.'/sh_log-link'))->resolve('log.log'), realpath($dir.'/log.log'));
+unlink($sandbox.'/sh_log-link');
 
 Check::group('список');
 
