@@ -66,6 +66,7 @@ Check::same('своя — абсолютный путь', AdminPage::isOwn("<?ph
 Check::same('чужая — другой модуль', AdminPage::isOwn($require('/bitrix/modules/acme.logs/admin/logs.php')), false);
 Check::same('чужая — своя страница проекта', AdminPage::isOwn("<?php\nrequire \$_SERVER['DOCUMENT_ROOT'].'/local/admin/logs.php';\necho 1;"), false);
 Check::same('чужая — наш require плюс ещё код', AdminPage::isOwn($require('/bitrix/modules/shef.problems/admin/logs.php').'<?php echo 1;'), false);
+Check::same('чужая — свой код, потом наш require', AdminPage::isOwn("<?php echo 1; ?>\n".$require('/bitrix/modules/shef.problems/admin/logs.php')), false);
 
 Check::group('установка');
 

@@ -75,10 +75,16 @@ $file = $sandbox.'/sh_log/include-test.log';
 $text = is_file($file) ? (string)file_get_contents($file) : '';
 Check::same('_log дописывает', substr_count($text, '[шаг] =>'), 2);
 
+// Файл от прошлого запроса: первый вызов обязан его затереть.
+file_put_contents($sandbox.'/sh_log/include-test1.log', 'прошлый запрос'.PHP_EOL);
 _log1(['первый' => 1], 'include-test1');
 _log1(['второй' => 2], 'include-test1');
 $text = (string)file_get_contents($sandbox.'/sh_log/include-test1.log');
-Check::same('_log1: первый вызов перезаписал, второй дописал', [str_contains($text, '[первый]'), str_contains($text, '[второй]')], [true, true]);
+Check::same(
+	'_log1: первый вызов перезаписал, второй дописал',
+	[str_contains($text, 'прошлый запрос'), str_contains($text, '[первый]'), str_contains($text, '[второй]')],
+	[false, true, true]
+);
 
 Check::group('трассировка в _log и _log1 — без аргументов вызовов');
 
@@ -112,6 +118,18 @@ ob_start();
 _pr(['name' => '<b>жирный</b>']);
 $out = (string)ob_get_clean();
 Check::same('разметка из данных не проходит', str_contains($out, '<b>жирный</b>'), false);
+
+Check::group('_pr — только администратору');
+
+\Bitrix\Main\Engine\CurrentUser::$isAdmin = false;
+ob_start();
+_pr(['name' => 'данные']);
+Check::same('не администратор — ничего', (string)ob_get_clean(), '');
+
+ob_start();
+_pr(['name' => 'данные'], true);
+Check::same('попросили показать всем — показано', str_contains((string)ob_get_clean(), 'данные'), true);
+\Bitrix\Main\Engine\CurrentUser::$isAdmin = true;
 
 // region Уборка ////
 unlink($optionsFunctions);

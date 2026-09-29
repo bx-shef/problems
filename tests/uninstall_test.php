@@ -107,6 +107,12 @@ $given = static function(): shef_problems
 	return new shef_problems();
 };
 
+Check::group('установщик требует shef.options 3.x');
+
+// options_conf.php написан под API страницы настроек shef.options 3.x: версию
+// в установщике опустили — модуль встанет на 2.x и упадёт на первой странице.
+Check::same('NEED_MODULES_BY_VERSION', (new shef_problems())->NEED_MODULES_BY_VERSION, ['shef.options' => '3.0.0']);
+
 Check::group('удаление уносит настройки модуля');
 
 $module = $given();

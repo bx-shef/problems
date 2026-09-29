@@ -79,11 +79,21 @@ Check::same('контейнер с уровнем', str_starts_with($out, '<div 
 Check::same('строки трассировки разделены <br>', str_contains($out, PHP_EOL.'<br>'), true);
 Check::same('стили подключены', Extension::$loaded, [Constants::EXTENSION_PR_HTML]);
 
-// Трассировка — тоже данные: в пути может оказаться что угодно.
-$out = $printed(function() use ($logger): void
+// Трассировка — тоже данные: в пути файла или имени функции может оказаться
+// что угодно. Кладём её сами, в обоих видах, что понимает обработчик.
+foreach(['массивом' => ['<script>a</script>', 'x.php:1'], 'строкой' => '<script>a</script>'] as $kind => $trace)
 {
-	$logger->debug('трасса', []);
-});
-Check::same('в трассировке нет сырых угловых скобок из данных', str_contains($out, '<script'), false);
+	$traced = (new Logger('prHtml'))
+		->pushHandler(new PrHtmlHandler())
+		->pushProcessor(static function(\Monolog\LogRecord $record) use ($trace): \Monolog\LogRecord
+		{
+			$record->extra['trace'] = $trace;
+
+			return $record;
+		});
+	$out = $printed(fn() => $traced->debug('трасса'));
+	Check::same('трассировка '.$kind.': разметки нет', str_contains($out, '<script'), false);
+	Check::same('трассировка '.$kind.': видна текстом', str_contains($out, '&lt;script&gt;'), true);
+}
 
 Check::finish();
