@@ -71,9 +71,11 @@ class Log1Handler
 	{
 		if(is_writable($this->url))
 		{
+			// true — ошибка обработана и дальше не идёт; false отдал бы её
+			// штатному обработчику, и warning всё равно вышел бы.
 			set_error_handler(callback: function(int $errno, string $errstr, string $errfile, int $errline): bool
 			{
-				return false;
+				return true;
 			});
 			unlink($this->url);
 			restore_error_handler();

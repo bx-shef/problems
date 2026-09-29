@@ -80,6 +80,22 @@ _log1(['второй' => 2], 'include-test1');
 $text = (string)file_get_contents($sandbox.'/sh_log/include-test1.log');
 Check::same('_log1: первый вызов перезаписал, второй дописал', [str_contains($text, '[первый]'), str_contains($text, '[второй]')], [true, true]);
 
+Check::group('трассировка в _log — без аргументов вызовов');
+
+// При zend.exception_ignore_args=Off (и длине строк > 0) getTraceAsString()
+// печатает аргументы:
+// пароль из login($user, $password) лёг бы в файл лога.
+ini_set('zend.exception_ignore_args', '0');
+ini_set('zend.exception_string_param_max_len', '15');
+$login = static function(string $user, string $password): void
+{
+	_log(['вход' => $user], 'include-test-args');
+};
+$login('admin', 'S3cretPass1');
+$text = (string)file_get_contents($sandbox.'/sh_log/include-test-args.log');
+Check::same('трассировка есть', str_contains($text, '>>> trace >>>') && str_contains($text, '{closure'), true);
+Check::same('пароля из аргументов нет', str_contains($text, 'S3cretPass1'), false);
+
 Check::group('_pr экранирует');
 
 \Bitrix\Main\Engine\CurrentUser::$isAdmin = true;

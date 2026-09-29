@@ -61,6 +61,7 @@ $rejected = array_values(array_filter(
 		'log.log.2.gz',
 		'notes.txt',
 		"log.log\0.php",
+		"log.log\n",
 		'',
 	],
 	static fn(string $name): bool => LogFiles::isValidName($name)

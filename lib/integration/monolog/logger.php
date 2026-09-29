@@ -15,6 +15,36 @@ use Throwable;
 class Logger
 	extends \Monolog\Logger
 {
+	/**
+	 * Сбой записи не роняет вызывающий код.
+	 *
+	 * Monolog без обработчика исключений пробрасывает сбой обработчика
+	 * наружу: каталог логов вне open_basedir или без прав — и
+	 * UnexpectedValueException падает в агент, обмен, обработчик события.
+	 * Логгер — не то место, из-за которого должна сорваться бизнес-операция,
+	 * поэтому сбой уходит в лог PHP. Свой обработчик — setExceptionHandler().
+	 */
+	public function __construct(
+		string $name,
+		array $handlers = [],
+		array $processors = [],
+		null|\DateTimeZone $timezone = null,
+		null|\Psr\Clock\ClockInterface $clock = null
+	)
+	{
+		parent::__construct($name, $handlers, $processors, $timezone, $clock);
+		
+		$this->setExceptionHandler(static function(Throwable $throwable) use ($name): void
+		{
+			error_log(sprintf(
+				'shef.problems: запись логгера %s не прошла: %s: %s',
+				$name,
+				$throwable::class,
+				$throwable->getMessage()
+			));
+		});
+	}
+	
 	protected function getStrategyConverterByMessage(mixed $message): LoggerConverter\IStrategy
 	{
 		if($message instanceof Throwable)

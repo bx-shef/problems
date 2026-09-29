@@ -602,9 +602,14 @@ Class shef_problems
 					$this->ShowForm(
 						'ERROR',
 						Loc::getMessage('SH_NEED_MODULES_BY_VERSION', [
+							// Модули линейки shef.* поставляются с GitHub: страница
+							// Marketplace для них отвечает «снят с публикации».
 							'#URL#' => (strpos($module, '.') === false
 								? 'https://www.1c-bitrix.ru/products/cms/versions.php?module='.$module
-								: 'https://marketplace.1c-bitrix.ru/solutions/'.$module.'/'
+								: (str_starts_with($module, 'shef.')
+									? 'https://github.com/bx-shef/'.substr($module, 5).'/releases'
+									: 'https://marketplace.1c-bitrix.ru/solutions/'.$module.'/'
+								)
 							),
 							'#NEED#' => $module,
 							'#VER#' => $ver

@@ -39,7 +39,10 @@ use Shef\Problems\Main\Constants;
  *
  * Путь модуля считается от корня сайта, потому что autoload.php приклеивает
  * к нему DOCUMENT_ROOT: модуль может стоять и в /bitrix/modules, и в
- * /local/modules.
+ * /local/modules. Каталог берётся у Loader::getLocal(), а не у __DIR__:
+ * __DIR__ раскрывает симлинки, и модуль в /local-ссылке (схема разработки,
+ * ext_www многосайтовой BitrixVM) оказался бы «вне корня» — с путём по
+ * умолчанию в /bitrix/modules, где его нет.
  *
  * Без shef.options (не поставлен, сломан) или при ошибке разбора
  * composer.json проекта — своя копия: модулю без логгера хуже, чем
@@ -50,7 +53,8 @@ $shProblemsNamespaces = (static function(): array
 	$monologPath = '/monolog/monolog/src/Monolog';
 
 	$documentRoot = rtrim(str_replace('\\', '/', (string)Loader::getDocumentRoot()), '/');
-	$moduleDir = str_replace('\\', '/', __DIR__);
+	$moduleDir = Loader::getLocal('modules/shef.problems');
+	$moduleDir = str_replace('\\', '/', is_string($moduleDir) ? $moduleDir : __DIR__);
 	$modulePath = ($documentRoot !== '' && str_starts_with($moduleDir, $documentRoot.'/'))
 		? mb_substr($moduleDir, mb_strlen($documentRoot))
 		: '/bitrix/modules/shef.problems';

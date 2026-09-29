@@ -52,8 +52,9 @@ sudo mkdir /var/www/sh_log && sudo chown www-data: /var/www/sh_log
 ```
 
 Если в PHP задан `open_basedir`, каталог логов должен в него входить — иначе
-запись молча не пройдёт, а в логе PHP появится предупреждение `open_basedir
-restriction in effect`.
+запись в файл не пройдёт. Вызывающий код от этого не падает: сбой уходит в
+лог PHP строкой `shef.problems: запись логгера … не прошла:
+UnexpectedValueException …`.
 
 ### После обновления с 1.x
 

@@ -102,6 +102,40 @@ Check::throws(
 	fn() => (new LoggerConverter\ThrowableStrategy())->doMessage('не исключение')
 );
 
+Check::group('сбой записи не роняет вызывающий код');
+
+// Каталог логов вне open_basedir или без прав — StreamHandler бросает
+// UnexpectedValueException. Здесь «каталог» — обычный файл: mkdir под ним не
+// выйдет ни у кого, в том числе у root.
+$sandbox = sys_get_temp_dir().'/shef-problems-logger-'.getmypid();
+mkdir($sandbox);
+file_put_contents($sandbox.'/not-a-dir', '');
+$phpLog = $sandbox.'/php.log';
+$previousErrorLog = ini_set('error_log', $phpLog);
+
+$broken = (new Logger('broken'))->pushHandler(
+	new Shef\Problems\Integration\Monolog\Handler\CappedStreamHandler($sandbox.'/not-a-dir/sh_log/x.log')
+);
+$thrown = null;
+try
+{
+	$broken->error('обмен упал');
+}
+catch(Throwable $throwable)
+{
+	$thrown = $throwable::class;
+}
+ini_set('error_log', (string)$previousErrorLog);
+
+Check::same('исключения наружу нет', $thrown, null);
+Check::same(
+	'сбой — в лог PHP, с именем логгера',
+	str_contains((string)@file_get_contents($phpLog), 'shef.problems: запись логгера broken не прошла: UnexpectedValueException'),
+	true
+);
+
+exec('rm -rf '.escapeshellarg($sandbox));
+
 Check::group('enum Logger и сервисы из .settings.php');
 
 \Bitrix\Main\Config\Configuration::$settings = require $root.'/.settings.php';

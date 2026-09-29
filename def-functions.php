@@ -72,7 +72,7 @@ if(!function_exists('_log'))
 				'['.date('Y-m-d H:i:s').']',
 				print_r($value, true),
 				'>>> trace >>>',
-				print_r(str_replace(Application::getDocumentRoot(), '', $e->getTraceAsString()), true),
+				str_replace(Application::getDocumentRoot(), '', \Shef\Problems\Throwable\Manager::traceToString($e->getTrace())),
 				'>>> >>> >>>',
 				''
 			]),
@@ -115,7 +115,7 @@ if(!function_exists('_log1'))
 				'['.date('Y-m-d H:i:s').']',
 				print_r($value, true),
 				'>>> trace >>>',
-				print_r(str_replace(Application::getDocumentRoot(), '', $e->getTraceAsString()), true),
+				str_replace(Application::getDocumentRoot(), '', \Shef\Problems\Throwable\Manager::traceToString($e->getTrace())),
 				'>>> >>> >>>',
 				''
 			]),
