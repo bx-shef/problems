@@ -15,20 +15,22 @@ $root = dirname(__DIR__);
 require_once $root.'/tests/assert.php';
 
 $skip = ['vendor/', 'tests/', 'lang/', 'examples/', '.claude/'];
-$files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root, FilesystemIterator::SKIP_DOTS));
+// Файлы под git, а не всё дерево: в игнорируемых каталогах (старые копии
+// модуля) свои коды, и локальный прогон краснел бы там, где CI зелёный.
+exec('git -C '.escapeshellarg($root).' ls-files -- '.escapeshellarg('*.php'), $tracked, $code);
+Check::same('git ls-files отработал', $code, 0);
 
 $checked = 0;
 $missing = [];
-foreach($files as $file)
+foreach($tracked as $path)
 {
-	$path = substr($file->getPathname(), strlen($root) + 1);
-	if('php' !== $file->getExtension() || array_filter($skip, static fn(string $dir): bool => str_starts_with($path, $dir)))
+	if(array_filter($skip, static fn(string $dir): bool => str_starts_with($path, $dir)))
 	{
 		continue;
 	}
 
 	// Только литерал целиком: 'SH_X'.$code собирается в рантайме, его не сверить.
-	preg_match_all("/Loc::getMessage\\(\\s*'([A-Z0-9_]+)'\\s*[,)]/", (string)file_get_contents($file->getPathname()), $found);
+	preg_match_all("/Loc::getMessage\\(\\s*'([A-Z0-9_]+)'\\s*[,)]/", (string)file_get_contents($root.'/'.$path), $found);
 	$codes = array_values(array_filter(array_unique($found[1]), static fn(string $code): bool => !str_starts_with($code, 'MAIN_')));
 	if(empty($codes))
 	{
