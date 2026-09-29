@@ -52,9 +52,12 @@ sudo mkdir /var/www/sh_log && sudo chown www-data: /var/www/sh_log
 ```
 
 Если в PHP задан `open_basedir`, каталог логов должен в него входить — иначе
-запись в файл не пройдёт. Вызывающий код от этого не падает: сбой уходит в
-лог PHP строкой `shef.problems: запись логгера … не прошла:
-UnexpectedValueException …`.
+запись в файл не пройдёт. В логе PHP появятся предупреждения `open_basedir
+restriction in effect` от самого Monolog и строка `shef.problems: запись
+логгера … не прошла: UnexpectedValueException …`. Вызывающий код при этом не
+падает — у логгеров модуля (сервисы из `.settings.php`, фабрика проблем).
+`_log()` и `_log1()` пишут мимо Monolog, через `File::putFileContents()`, и
+строки `shef.problems:` от них не будет.
 
 ### После обновления с 1.x
 

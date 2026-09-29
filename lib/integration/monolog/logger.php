@@ -8,6 +8,7 @@ use Bitrix\Main\Type\Contract;
 
 use InvalidArgumentException;
 use JsonSerializable;
+use Monolog\LogRecord;
 use Shef\Problems\Integration\Monolog\Strategy\LoggerConverter;
 use Stringable;
 use Throwable;
@@ -23,6 +24,11 @@ class Logger
 	 * UnexpectedValueException падает в агент, обмен, обработчик события.
 	 * Логгер — не то место, из-за которого должна сорваться бизнес-операция,
 	 * поэтому сбой уходит в лог PHP. Свой обработчик — setExceptionHandler().
+	 *
+	 * Сбойный обработчик прерывает запись: обработчики ниже по стеку её не
+	 * получат (так устроен Monolog::addRecord()). В лог PHP — только первая
+	 * строка сообщения: ниже Monolog дописывает саму запись с контекстом, а
+	 * лог PHP для данных записи не место.
 	 */
 	public function __construct(
 		string $name,
@@ -34,13 +40,13 @@ class Logger
 	{
 		parent::__construct($name, $handlers, $processors, $timezone, $clock);
 		
-		$this->setExceptionHandler(static function(Throwable $throwable) use ($name): void
+		$this->setExceptionHandler(static function(Throwable $throwable, LogRecord $record): void
 		{
 			error_log(sprintf(
 				'shef.problems: запись логгера %s не прошла: %s: %s',
-				$name,
+				$record->channel,
 				$throwable::class,
-				$throwable->getMessage()
+				strtok(trim($throwable->getMessage()), "\r\n") ?: ''
 			));
 		});
 	}

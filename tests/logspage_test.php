@@ -76,6 +76,8 @@ class CFile
 // region Песочница: корень сайта и каталог логов рядом с ним ////
 $portal = sys_get_temp_dir().'/shef-problems-logspage-'.getmypid();
 $www = $portal.'/www';
+// Уборка — и при фатальной ошибке страницы, а не только в конце скрипта.
+register_shutdown_function(static fn() => exec('rm -rf '.escapeshellarg($portal)));
 mkdir($www.'/bitrix/modules/main/include', 0777, true);
 mkdir($portal.'/sh_log');
 foreach(['prolog_admin_before', 'prolog_admin_after', 'epilog_admin'] as $part)
@@ -161,7 +163,6 @@ Check::same(
 // region Уборка ////
 Context::$query = [];
 Loc::$messages = [];
-exec('rm -rf '.escapeshellarg($portal));
 // endregion ////
 
 Check::finish();

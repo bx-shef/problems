@@ -120,19 +120,30 @@ $thrown = null;
 try
 {
 	$broken->error('обмен упал');
+	$broken->withName('renamed')->error('и под другим именем');
+	// «Файл» — каталог: fopen() не выйдет, и Monolog дописывает к сообщению
+	// исключения саму запись с контекстом.
+	mkdir($sandbox.'/dir.log');
+	(new Logger('unopened'))
+		->pushHandler(new Shef\Problems\Integration\Monolog\Handler\CappedStreamHandler($sandbox.'/dir.log'))
+		->error('обмен упал', ['token' => 'S3cretToken']);
 }
 catch(Throwable $throwable)
 {
 	$thrown = $throwable::class;
 }
 ini_set('error_log', (string)$previousErrorLog);
+$phpLogText = (string)@file_get_contents($phpLog);
 
 Check::same('исключения наружу нет', $thrown, null);
 Check::same(
 	'сбой — в лог PHP, с именем логгера',
-	str_contains((string)@file_get_contents($phpLog), 'shef.problems: запись логгера broken не прошла: UnexpectedValueException'),
+	str_contains($phpLogText, 'shef.problems: запись логгера broken не прошла: UnexpectedValueException'),
 	true
 );
+Check::same('имя — у записи: withName() не врёт', str_contains($phpLogText, 'запись логгера renamed не прошла'), true);
+Check::same('файл не открылся — тоже в лог PHP', str_contains($phpLogText, 'запись логгера unopened не прошла'), true);
+Check::same('данных записи в логе PHP нет', str_contains($phpLogText, 'S3cretToken'), false);
 
 exec('rm -rf '.escapeshellarg($sandbox));
 

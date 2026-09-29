@@ -55,7 +55,11 @@ class SystemLoggerFactory
 				{
 					// Модуль не задан фабрике — остаётся тот, что передан в
 					// контексте записи: иначе в журнал уходил бы 'empty'.
-					if(Constants::EmptyValue !== $moduleId)
+					// Нет нигде — 'empty', как раньше.
+					if(
+						Constants::EmptyValue !== $moduleId
+						|| !isset($record->context['moduleId'])
+					)
 					{
 						$record->extra['moduleId'] = $moduleId;
 					}
