@@ -89,7 +89,19 @@ Check::same(
 unlink($broken);
 Loader::$local = [];
 
-// Модуль вне корня сайта (симлинк, нестандартная раскладка) — путь по умолчанию.
+// /local — симлинк: __DIR__ его раскрывает и «выходит» из корня сайта, а
+// ядро находит модуль по пути от корня. Путь — тот, что даёт ядро.
+Application::$documentRoot = '/home/bitrix/ext_www/site2';
+Loader::$local['modules/shef.problems'] = '/home/bitrix/ext_www/site2/local/modules/shef.problems';
+$settings = require $root.'/.settings.php';
+Check::same(
+	'модуль через симлинк /local — путь от корня сайта',
+	$settings['registerNamespace']['value']['Monolog'] ?? null,
+	'/local/modules/shef.problems/vendor/monolog/monolog/src/Monolog'
+);
+Loader::$local = [];
+
+// Модуль вне корня сайта (нестандартная раскладка) — путь по умолчанию.
 Application::$documentRoot = '/somewhere/else';
 $settings = require $root.'/.settings.php';
 Check::same(

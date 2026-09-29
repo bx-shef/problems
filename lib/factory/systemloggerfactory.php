@@ -53,7 +53,16 @@ class SystemLoggerFactory
 				function (MonologLogRecord $record)
 				use ($moduleId, $className, $assigned)
 				{
-					$record->extra['moduleId'] = $moduleId;
+					// Модуль не задан фабрике — остаётся тот, что передан в
+					// контексте записи: иначе в журнал уходил бы 'empty'.
+					// Нет нигде — 'empty', как раньше.
+					if(
+						Constants::EmptyValue !== $moduleId
+						|| !isset($record->context['moduleId'])
+					)
+					{
+						$record->extra['moduleId'] = $moduleId;
+					}
 					$record->extra['class'] = $className;
 					$record->extra['assigned'] = $assigned;
 					

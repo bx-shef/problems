@@ -8,6 +8,7 @@ use Bitrix\Main\Type\Contract;
 
 use InvalidArgumentException;
 use JsonSerializable;
+use Monolog\LogRecord;
 use Shef\Problems\Integration\Monolog\Strategy\LoggerConverter;
 use Stringable;
 use Throwable;
@@ -15,6 +16,41 @@ use Throwable;
 class Logger
 	extends \Monolog\Logger
 {
+	/**
+	 * Сбой записи не роняет вызывающий код.
+	 *
+	 * Monolog без обработчика исключений пробрасывает сбой обработчика
+	 * наружу: каталог логов вне open_basedir или без прав — и
+	 * UnexpectedValueException падает в агент, обмен, обработчик события.
+	 * Логгер — не то место, из-за которого должна сорваться бизнес-операция,
+	 * поэтому сбой уходит в лог PHP. Свой обработчик — setExceptionHandler().
+	 *
+	 * Сбойный обработчик прерывает запись: обработчики ниже по стеку её не
+	 * получат (так устроен Monolog::addRecord()). В лог PHP — только первая
+	 * строка сообщения: ниже Monolog дописывает саму запись с контекстом, а
+	 * лог PHP для данных записи не место.
+	 */
+	public function __construct(
+		string $name,
+		array $handlers = [],
+		array $processors = [],
+		null|\DateTimeZone $timezone = null,
+		null|\Psr\Clock\ClockInterface $clock = null
+	)
+	{
+		parent::__construct($name, $handlers, $processors, $timezone, $clock);
+		
+		$this->setExceptionHandler(static function(Throwable $throwable, LogRecord $record): void
+		{
+			error_log(sprintf(
+				'shef.problems: запись логгера %s не прошла: %s: %s',
+				$record->channel,
+				$throwable::class,
+				strtok(trim($throwable->getMessage()), "\r\n") ?: ''
+			));
+		});
+	}
+	
 	protected function getStrategyConverterByMessage(mixed $message): LoggerConverter\IStrategy
 	{
 		if($message instanceof Throwable)

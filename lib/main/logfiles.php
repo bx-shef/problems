@@ -25,7 +25,8 @@ namespace Shef\Problems\Main;
  */
 class LogFiles
 {
-	public const NAME_PATTERN = '/^[A-Za-z0-9_-]+\.log(\.[0-9]+)?$/';
+	// \z, а не $: $ пропускает перевод строки в конце имени.
+	public const NAME_PATTERN = '/^[A-Za-z0-9_-]+\.log(\.[0-9]+)?\z/';
 
 	/**
 	 * Сколько байт с конца файла показывать по умолчанию.

@@ -133,4 +133,29 @@ Check::same('трассировка исключения — массив', is_a
 Check::same('первая строка — из трассировки исключения', str_starts_with((string)$trace[0], '#0 /tests/trace_test.php'), true);
 Check::same('сообщение — текст исключения', end($records)->message, 'сбой');
 
+Check::group('Throwable\\Manager: трассировка ошибки без аргументов');
+
+ini_set('zend.exception_ignore_args', '0');
+ini_set('zend.exception_string_param_max_len', '15');
+$login = static function(string $user, string $password): void
+{
+	throw new RuntimeException('вход не удался');
+};
+try
+{
+	$login('admin', 'S3cretPass1');
+}
+catch(RuntimeException $exception)
+{
+}
+Check::same('аргументы в трассировке PHP есть — проверка не впустую', str_contains($exception->getTraceAsString(), 'S3cretPass1'), true);
+$error = \Shef\Problems\Throwable\Manager::buildError($exception);
+Check::same('в тексте ошибки трассировка есть', str_contains($error->getMessage(), 'Trace: #0 '), true);
+Check::same('пароля в тексте ошибки нет', str_contains($error->getMessage(), 'S3cretPass1'), false);
+Check::same(
+	'кадр встроенной функции без file — без warning',
+	\Shef\Problems\Throwable\Manager::traceToString([['function' => 'array_map']]),
+	'#0 [internal function]: array_map()'.PHP_EOL.'#1 {main}'
+);
+
 Check::finish();

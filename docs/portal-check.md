@@ -142,6 +142,8 @@ foreach(["getDefUserId","getAdminId","getDirectorId","getSyncUserId","getProduct
   получает форму входа, а не лог;
 * `…/shef_problems_logs.php?file=../www/bitrix/.settings.php` — «файла нет», а
   не содержимое настроек;
+* `…/shef_problems_logs.php?file=%3Cimg%20src%3Dx%20onerror%3Dalert(1)%3E` —
+  в заголовке страницы `<img …>` виден **текстом**, окна alert нет;
 * пункт журнала открывает журнал событий, отфильтрованный по типу;
 * «Ошибки платёжных систем» есть, только если стоит `perfmon`.
 
@@ -165,8 +167,9 @@ ls -l /home/bitrix/sh_log/sh_problems_sync.log     # есть, владелец 
 ls /home/bitrix/www/local/sh_log/ 2>/dev/null      # нового файла тут нет
 ```
 
-Файла нет, а пример прошёл — смотрите лог PHP: `open_basedir` или права на
-родительский каталог, см. [security.md](security.md). На стенде, обновлённом с
+Файла нет, а пример прошёл — смотрите лог PHP: строка `shef.problems: запись
+логгера … не прошла` скажет почему (`open_basedir` или права на родительский
+каталог), см. [security.md](security.md). На стенде, обновлённом с
 1.x, старый `/local/sh_log` остаётся и **открыт** веб-серверу — перенесите логи
 и удалите его, там же.
 

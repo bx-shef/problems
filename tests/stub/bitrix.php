@@ -753,6 +753,9 @@ namespace Bitrix\Main
 			public static ?string $site = null;
 			public static bool $isAdminSection = false;
 
+			/** @var array<string, mixed> параметры адресной строки: getQuery() */
+			public static array $query = [];
+
 			public static function getCurrent(): static
 			{
 				return new static();
@@ -775,6 +778,11 @@ namespace Bitrix\Main
 					public function isAdminSection(): bool
 					{
 						return Context::$isAdminSection;
+					}
+
+					public function getQuery(string $name): mixed
+					{
+						return Context::$query[$name] ?? null;
 					}
 				};
 			}

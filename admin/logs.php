@@ -7,8 +7,8 @@
  * ссылка, ни файловый менеджер Битрикса туда не дотянутся, и это нарочно.
  * Эта страница — единственный способ посмотреть лог из браузера.
  *
- * Открывается через /bitrix/admin/shef_problems_logs.php — заглушку, которую
- * установщик кладёт из install/admin (каталог модуля браузеру недоступен).
+ * Открывается через /bitrix/admin/shef_problems_logs.php — заглушку в одну
+ * строку, которую пишет Main\AdminPage (каталог модуля браузеру недоступен).
  *
  * Без параметра — список файлов; ?file=<имя> — конец файла. Имя проверяет
  * LogFiles::resolve(): шаблон имени и путь внутри каталога логов после
@@ -46,12 +46,15 @@ if(!Loader::includeModule('shef.problems'))
 $escape = static fn(string $value): string => htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 
 $lang = (string)(Context::getCurrent()?->getLanguage() ?: LANGUAGE_ID);
-$name = (string)Context::getCurrent()?->getRequest()->getQuery('file');
+$name = Context::getCurrent()?->getRequest()->getQuery('file');
+// ?file[]=… — массив, а не имя: как «файла нет», без warning.
+$name = is_string($name) ? $name : '';
 $files = LogFiles::create();
 
 $APPLICATION->SetTitle($name === ''
 	? Loc::getMessage('SH_PROBLEMS_LOGS_TITLE')
-	: Loc::getMessage('SH_PROBLEMS_LOGS_TITLE_FILE', ['#FILE#' => $name])
+	// Имя — из запроса, заголовок уходит в страницу: экранируется, как всё.
+	: Loc::getMessage('SH_PROBLEMS_LOGS_TITLE_FILE', ['#FILE#' => $escape($name)])
 );
 
 require $_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_admin_after.php';

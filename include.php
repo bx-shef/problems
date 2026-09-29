@@ -10,7 +10,7 @@
 //
 // Первенство не абсолютное: если shef.options подключили раньше этого модуля
 // в том же запросе, его функции уже объявлены. Выше обоих — версия проекта из
-// php_interface/def-functions.php. @see CLAUDE.md, «Чьи _log() и _pr()».
+// php_interface/def-functions.php. @see docs/2_deffunctions.md, «Чьи функции победят».
 require_once __DIR__.'/def-functions.php';
 
 require_once __DIR__.'/autoload.php';

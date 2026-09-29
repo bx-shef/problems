@@ -119,6 +119,20 @@ $logger->error('куда-то');
 
 Check::same('незнакомый тип заменён типом по умолчанию', CEventLog::$records[0]['AUDIT_TYPE_ID'] ?? null, Constants::getDefAuditType());
 
+Check::group('фабрика: модуль из контекста записи');
+
+CEventLog::$records = [];
+SystemLoggerFactory::build(logLevel: Level::Debug)->error('без модуля у фабрики', ['moduleId' => 'acme.exchange']);
+Check::same('фабрике модуль не задан — берётся из контекста', CEventLog::$records[0]['MODULE_ID'] ?? null, 'acme.exchange');
+
+CEventLog::$records = [];
+SystemLoggerFactory::build(logLevel: Level::Debug, moduleId: 'acme.catalog')->error('модуль у фабрики');
+Check::same('фабрике модуль задан — он', CEventLog::$records[0]['MODULE_ID'] ?? null, 'acme.catalog');
+
+CEventLog::$records = [];
+SystemLoggerFactory::build(logLevel: Level::Debug)->error('модуля нет нигде');
+Check::same('модуля нет нигде — empty, как раньше', CEventLog::$records[0]['MODULE_ID'] ?? null, Constants::EmptyValue);
+
 // region Уборка ////
 $remove = static function(string $dir) use (&$remove): void
 {

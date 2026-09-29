@@ -137,20 +137,22 @@ Check::group('обработчики снимаются, включая оста
 $module = $given();
 $module->UnInstallEvents();
 
+// Класс — ровно как записан, без ltrim: ядро снимает регистрацию по точному
+// совпадению TO_CLASS, а 1.1.7 регистрировал его с ведущим «\».
 $unregistered = array_map(
-	static fn(array $call): string => $call[0].':'.$call[1].' -> '.ltrim($call[3], '\\').'::'.$call[4],
+	static fn(array $call): string => $call[0].':'.$call[1].' -> '.$call[3].'::'.$call[4],
 	EventManager::$unregistered
 );
 
 Check::same('снято ровно три обработчика', count($unregistered), 3);
 Check::same(
 	'свой OnPageStart',
-	in_array('main:OnPageStart -> Shef\\Problems\\Integration\\Main\\Events::onPageStart', $unregistered, true),
+	in_array('main:OnPageStart -> \\Shef\\Problems\\Integration\\Main\\Events::onPageStart', $unregistered, true),
 	true
 );
 Check::same(
 	'обработчик shef.uiclear из 1.x',
-	in_array('shef.uiclear:onBitrixMenuExtInitTopPanelUserMenu -> Shef\\Problems\\Integration\\Shef\\UiClear\\Events::onBitrixMenuExtInitTopPanelUserMenu', $unregistered, true),
+	in_array('shef.uiclear:onBitrixMenuExtInitTopPanelUserMenu -> \\Shef\\Problems\\Integration\\Shef\\UiClear\\Events::onBitrixMenuExtInitTopPanelUserMenu', $unregistered, true),
 	true
 );
 

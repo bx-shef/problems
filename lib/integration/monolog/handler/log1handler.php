@@ -69,15 +69,18 @@ class Log1Handler
 	 */
 	protected function rotate(): void
 	{
+		// true — ошибка обработана и дальше не идёт; false отдал бы её
+		// штатному обработчику, и warning всё равно вышел бы. is_writable()
+		// тоже внутри: вне open_basedir warning даёт и он.
+		set_error_handler(callback: function(int $errno, string $errstr, string $errfile, int $errline): bool
+		{
+			return true;
+		});
 		if(is_writable($this->url))
 		{
-			set_error_handler(callback: function(int $errno, string $errstr, string $errfile, int $errline): bool
-			{
-				return false;
-			});
 			unlink($this->url);
-			restore_error_handler();
 		}
+		restore_error_handler();
 		
 		$this->mustRotate = false;
 	}

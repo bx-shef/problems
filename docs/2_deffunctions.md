@@ -33,6 +33,7 @@
 | класс | что делает |
 |---|---|
 | Manager::buildError | `\Throwable` → `\Bitrix\Main\Error`: текст, файл, строка и по желанию трассировка |
+| Manager::traceToString | трассировка строкой, как `getTraceAsString()`, но без аргументов вызовов — в них бывают пароли |
 
 ```php
 $result = new \Bitrix\Main\Result();
