@@ -75,6 +75,17 @@ composer require bxshef/problems
    [безопасность логов](https://github.com/bx-shef/problems/blob/main/docs/security.md).
 4. По желанию — [ротация логов](https://github.com/bx-shef/problems/blob/main/docs/5_logrotate.md).
 
+## Обновление с 1.x
+
+2.0.0 несовместима с 1.x — список в [CHANGELOG](https://github.com/bx-shef/problems/blob/main/CHANGELOG.md).
+Коротко:
+
+1. Сначала `shef.options` до 3.x, потом файлы этого модуля — каталог целиком.
+2. **Старый `/local/sh_log` остаётся и открыт веб-серверу**: перенесите нужные
+   логи в новый каталог и удалите его, поправьте пути в logrotate —
+   [как](https://github.com/bx-shef/problems/blob/main/docs/security.md).
+3. Ставите архивом на проект с Composer — Monolog в проекте должен быть 3.x.
+
 # Как пользоваться
 
 Проблема в своём классе — трейт, две строки настройки, одна строка записи:

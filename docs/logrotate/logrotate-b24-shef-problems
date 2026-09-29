@@ -9,6 +9,8 @@
 	missingok
 	rotate 2
 	maxsize 5M
+	dateext
+	dateformat -%Y%m%d-%s
 	compress
 	delaycompress
 	notifempty
@@ -27,6 +29,8 @@
 	missingok
 	rotate 10
 	maxsize 5M
+	dateext
+	dateformat -%Y%m%d-%s
 	compress
 	delaycompress
 	notifempty

@@ -142,7 +142,8 @@ enum `\Shef\Problems\Logger`. `handlerType` сервиса решает, поп�
 
 **Monolog: и Composer, и своя копия.** Оба пути поставки остаются: Composer
 кладёт Monolog в vendor проекта, архив несёт копию в `vendor/`. Какой
-подключать — решает `ShComposerContext` из shef.options. Копия обязана
+подключать — решает `ShProjectContext` из shef.options (Composer проекта он
+узнаёт через `ShComposerContext`). Копия обязана
 подходить под ограничение из `composer.json` — `tests/vendor_test.php`.
 
 **shef.uiclear не используем — штатные возможности Битрикс24.** Пункты «Логи»

@@ -41,9 +41,9 @@ Class shef_problems
 	/** @var array  */
 	public $NEED_MODULES = [];
 	/**
-	 * shef.options нужен не любой: страница настроек и выбор источника
-	 * Monolog опираются на то, что появилось в 3.0.0 (ShOptionsConfig без
-	 * indexDoc, ShProjectContext в project-context.php).
+	 * shef.options нужен не любой: options_conf.php написан под API страницы
+	 * настроек 3.0.0 — ShOptionsConfig без indexDoc. На 2.x страница настроек
+	 * упала бы «Unknown named parameter».
 	 *
 	 * @var array
 	 */

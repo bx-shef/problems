@@ -15,8 +15,9 @@
 Те же три функции объявляет `shef.options`, и каждая закрыта
 `function_exists`: побеждает тот, кто объявил первым.
 
-1. **Версия проекта** — `bitrix/php_interface/def-functions.php`, если есть:
-   её подключают оба модуля до своих.
+1. **Версия проекта** — `php_interface/def-functions.php` рядом с каталогом
+   `modules`, где стоит модуль (`bitrix/php_interface/…` или
+   `local/php_interface/…`), если есть: её подключают оба модуля до своих.
 2. **Этот модуль** — `include.php` подключает `def-functions.php` до
    `autoload.php`, а `autoload.php` уже подключает `shef.options`.
 3. **shef.options** — если его подключили в запросе раньше этого модуля.

@@ -43,7 +43,7 @@ ls /var/www/portal/bitrix/js/ /var/www/portal/bitrix/images/ | sort > /tmp/publi
 ```bash
 git clone https://github.com/bx-shef/problems.git
 cd problems && git checkout <тег проверяемой версии>
-./build.sh                       # последняя строка напечатает sha256
+./build.sh                       # строка «[ OK ] архив …» перед «Готово.» — sha256
 sha256sum /путь/к/скачанному/shef.problems.zip
 ```
 
@@ -179,13 +179,17 @@ ls /home/bitrix/www/local/sh_log/ 2>/dev/null      # нового файла т�
 php -r '$_SERVER["DOCUMENT_ROOT"]="/var/www/portal"; define("NO_KEEP_STATISTIC",true); define("NOT_CHECK_PERMISSIONS",true);
 require $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_before.php";
 \Bitrix\Main\Loader::includeModule("shef.problems");
-echo (new ReflectionClass(\Monolog\Logger::class))->getFileName(), PHP_EOL;'
+echo (new ReflectionClass(\Monolog\Logger::class))->getFileName(), PHP_EOL;
+var_dump(class_exists(\Monolog\Level::class), \Monolog\Logger::API);'
 ```
 
-**Ожидается:**
+**Ожидается:** `bool(true)` и `int(3)` — Monolog 3.x. `false` или `2` —
+в vendor проекта Monolog 2.x: модуль свою копию не подключит и упадёт на
+`Monolog\Level`, обновите Monolog в проекте. Путь к файлу:
 
 * на портале без Composer (или без Monolog в нём) — путь внутри
-  `bitrix/modules/shef.problems/vendor/`;
+  `vendor/` модуля: `bitrix/modules/shef.problems/vendor/`, а модуль в
+  `/local/modules` (в том числе через ссылку `/local`) — `local/modules/…`;
 * на портале, где Monolog стоит через Composer проекта и путь к
   `composer.json` указан в `/bitrix/.settings.php` (ключ `composer`), — путь
   внутри vendor проекта.
@@ -242,7 +246,7 @@ for e in problems logger throwable log1; do DOCUMENT_ROOT=/var/www/portal php ex
 
 ```
 Версия: ____  Коммит: ____  sha256 архива сошёлся: да / нет
-Ядро main: ____  PHP: ____  shef.options: ____  Composer в проекте: да / нет
+Ядро main: ____  PHP: ____  shef.options: ____  Composer в проекте: да / нет  Monolog: ____
 open_basedir: нет / есть, каталог логов в нём: да / нет
 
 0. Архив .................................. ок / не ок
