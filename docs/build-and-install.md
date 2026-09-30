@@ -4,7 +4,9 @@
 в [CONTRIBUTING.md](../CONTRIBUTING.md), установка глазами пользователя —
 в [README.md](../README.md).
 
-## `build.sh` — единственная точка входа
+## `build.sh` — точка входа сборки и проверок
+
+Вторая проверка — линтер, отдельной целью Composer: см. раздел ниже.
 
 ```bash
 ./build.sh            # проверки + архив shef.problems.zip
