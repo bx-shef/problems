@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 /**
  * Подключение модуля даёт _log(), _log1(), _pr() — и именно свои.
@@ -37,9 +39,8 @@ foreach(['_log', '_log1', '_pr'] as $name)
 	}
 }
 PHP);
-\Bitrix\Main\Loader::$onInclude['shef.options'] = static function() use ($optionsFunctions): void
-{
-	require_once $optionsFunctions;
+\Bitrix\Main\Loader::$onInclude['shef.options'] = static function () use ($optionsFunctions): void {
+    require_once $optionsFunctions;
 };
 
 Check::group('до подключения модуля');
@@ -52,9 +53,8 @@ require_once $root.'/include.php';
 
 Check::group('после подключения модуля');
 
-foreach(['_log', '_log1', '_pr'] as $name)
-{
-	Check::same($name.' объявлена этим модулем', (new ReflectionFunction($name))->getFileName(), $root.'/def-functions.php');
+foreach (['_log', '_log1', '_pr'] as $name) {
+    Check::same($name.' объявлена этим модулем', (new ReflectionFunction($name))->getFileName(), $root.'/def-functions.php');
 }
 
 Check::group('сигнатура _log та, что зовёт трейт Log из shef.options');
@@ -81,9 +81,9 @@ _log1(['первый' => 1], 'include-test1');
 _log1(['второй' => 2], 'include-test1');
 $text = (string)file_get_contents($sandbox.'/sh_log/include-test1.log');
 Check::same(
-	'_log1: первый вызов перезаписал, второй дописал',
-	[str_contains($text, 'прошлый запрос'), str_contains($text, '[первый]'), str_contains($text, '[второй]')],
-	[false, true, true]
+    '_log1: первый вызов перезаписал, второй дописал',
+    [str_contains($text, 'прошлый запрос'), str_contains($text, '[первый]'), str_contains($text, '[второй]')],
+    [false, true, true]
 );
 
 Check::group('трассировка в _log и _log1 — без аргументов вызовов');
@@ -92,23 +92,21 @@ Check::group('трассировка в _log и _log1 — без аргумен�
 // печатает аргументы: пароль из login($user, $password) лёг бы в файл лога.
 ini_set('zend.exception_ignore_args', '0');
 ini_set('zend.exception_string_param_max_len', '15');
-$login = static function(string $function, string $password): \Exception
-{
-	$function(['вход' => 'admin'], 'include-test-args-'.$function);
+$login = static function (string $function, string $password): \Exception {
+    $function(['вход' => 'admin'], 'include-test-args-'.$function);
 
-	return new \Exception();
+    return new \Exception();
 };
 Check::same(
-	'аргументы в трассировке PHP есть — проверка не впустую',
-	str_contains($login('_log', 'S3cretPass1')->getTraceAsString(), 'S3cretPass1'),
-	true
+    'аргументы в трассировке PHP есть — проверка не впустую',
+    str_contains($login('_log', 'S3cretPass1')->getTraceAsString(), 'S3cretPass1'),
+    true
 );
 $login('_log1', 'S3cretPass1');
-foreach(['_log', '_log1'] as $function)
-{
-	$text = (string)file_get_contents($sandbox.'/sh_log/include-test-args-'.$function.'.log');
-	Check::same($function.': трассировка есть', str_contains($text, '>>> trace >>>') && str_contains($text, '{closure'), true);
-	Check::same($function.': пароля из аргументов нет', str_contains($text, 'S3cretPass1'), false);
+foreach (['_log', '_log1'] as $function) {
+    $text = (string)file_get_contents($sandbox.'/sh_log/include-test-args-'.$function.'.log');
+    Check::same($function.': трассировка есть', str_contains($text, '>>> trace >>>') && str_contains($text, '{closure'), true);
+    Check::same($function.': пароля из аргументов нет', str_contains($text, 'S3cretPass1'), false);
 }
 
 Check::group('_pr экранирует');

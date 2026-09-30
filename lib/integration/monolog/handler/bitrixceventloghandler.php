@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Shef\Problems\Integration\Monolog\Handler;
 
@@ -22,47 +24,44 @@ use Monolog\LogRecord;
  * @see /bitrix/admin/log_notification_edit.php
  * @see b_event_log
  */
-class BitrixCEventLogHandler
-	extends AbstractProcessingHandler
+class BitrixCEventLogHandler extends AbstractProcessingHandler
 {
-	public function __construct(
-		public readonly string $auditType,
-		int|string|Level $level = Level::Debug,
-		bool $bubble = true
-	)
-	{
-		parent::__construct($level, $bubble);
-	}
-	
-	/**
-	 * {@inheritdoc}
-	 */
-	protected function write(LogRecord $record): void
-	{
-		$formatted = $record->formatted;
-		if(!($formatted instanceof BitrixCEventLogEntity))
-		{
-			throw new LogicException(sprintf(
-				'LogRecord->formatted not implement %s. Try use %s',
-				BitrixCEventLogEntity::class,
-				BitrixCEventLogFormatter::class
-			));
-		}
-		
-		CEventLog::Log(
-			$formatted->getSeverity(),
-			$this->auditType,
-			$formatted->getModuleId(),
-			$formatted->getItemId(),
-			$formatted->getFormattedDescription()
-		);
-	}
-	
-	/**
-	 * {@inheritdoc}
-	 */
-	protected function getDefaultFormatter(): FormatterInterface
-	{
-		return new BitrixCEventLogFormatter();
-	}
+    public function __construct(
+        public readonly string $auditType,
+        int|string|Level $level = Level::Debug,
+        bool $bubble = true
+    ) {
+        parent::__construct($level, $bubble);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    protected function write(LogRecord $record): void
+    {
+        $formatted = $record->formatted;
+        if (!($formatted instanceof BitrixCEventLogEntity)) {
+            throw new LogicException(sprintf(
+                'LogRecord->formatted not implement %s. Try use %s',
+                BitrixCEventLogEntity::class,
+                BitrixCEventLogFormatter::class
+            ));
+        }
+
+        CEventLog::Log(
+            $formatted->getSeverity(),
+            $this->auditType,
+            $formatted->getModuleId(),
+            $formatted->getItemId(),
+            $formatted->getFormattedDescription()
+        );
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    protected function getDefaultFormatter(): FormatterInterface
+    {
+        return new BitrixCEventLogFormatter();
+    }
 }

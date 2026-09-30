@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 /**
  * Вывод на экран: только администратору и только экранированным.
@@ -28,11 +30,10 @@ use Shef\Problems\Integration\Monolog\Processor\TraceProcessor;
 use Shef\Problems\Main\Constants;
 
 /** Что обработчик напечатал за вызов. */
-$printed = static function(callable $call): string
-{
-	ob_start();
-	$call();
-	return (string)ob_get_clean();
+$printed = static function (callable $call): string {
+    ob_start();
+    $call();
+    return (string)ob_get_clean();
 };
 
 $attack = '<script>alert(1)</script>';
@@ -41,18 +42,18 @@ Check::group('кому показывать');
 
 CurrentUser::$isAdmin = false;
 $logger = (new Logger('pr'))->pushHandler(new PrHandler());
-Check::same('не администратору — ничего', $printed(fn() => $logger->debug('секрет')), '');
+Check::same('не администратору — ничего', $printed(fn () => $logger->debug('секрет')), '');
 
 $logger = (new Logger('pr'))->pushHandler(new PrHandler(isShowForAll: true));
-Check::same('isShowForAll — всем', str_contains($printed(fn() => $logger->debug('всем')), 'всем'), true);
+Check::same('isShowForAll — всем', str_contains($printed(fn () => $logger->debug('всем')), 'всем'), true);
 
 CurrentUser::$isAdmin = true;
 $logger = (new Logger('pr'))->pushHandler(new PrHandler());
-Check::same('администратору — да', str_contains($printed(fn() => $logger->debug('админу')), 'админу'), true);
+Check::same('администратору — да', str_contains($printed(fn () => $logger->debug('админу')), 'админу'), true);
 
 Check::group('PrHandler: экранирование');
 
-$out = $printed(fn() => $logger->warning($attack, ['name' => $attack]));
+$out = $printed(fn () => $logger->warning($attack, ['name' => $attack]));
 
 Check::same('тега script в выводе нет', str_contains($out, '<script>'), false);
 Check::same('сообщение экранировано', str_contains($out, '&lt;script&gt;alert(1)&lt;/script&gt;'), true);
@@ -61,7 +62,7 @@ Check::same('обёртка <pre> — своя разметка — на мес�
 Check::group('PrHandler: без TraceProcessor');
 
 // Обвязка превращает warning в исключение: дошли досюда — ключ не читали вслепую.
-$out = $printed(fn() => $logger->info('без трассировки'));
+$out = $printed(fn () => $logger->info('без трассировки'));
 Check::same('запись без extra.trace напечатана', str_contains($out, 'без трассировки'), true);
 
 Check::group('PrHtmlHandler: разметка своя, данные чужие');
@@ -72,7 +73,7 @@ $handler = new PrHtmlHandler();
 $handler->pushProcessor(new TraceProcessor());
 $logger = (new Logger('prHtml'))->pushHandler($handler);
 
-$out = $printed(fn() => $logger->error($attack, ['field' => $attack]));
+$out = $printed(fn () => $logger->error($attack, ['field' => $attack]));
 
 Check::same('тега script в выводе нет', str_contains($out, '<script>'), false);
 Check::same('контейнер с уровнем', str_starts_with($out, '<div class="shef-problems-container" data-level="ERROR">'), true);
@@ -81,19 +82,17 @@ Check::same('стили подключены', Extension::$loaded, [Constants::E
 
 // Трассировка — тоже данные: в пути файла или имени функции может оказаться
 // что угодно. Кладём её сами, в обоих видах, что понимает обработчик.
-foreach(['массивом' => ['<script>a</script>', 'x.php:1'], 'строкой' => '<script>a</script>'] as $kind => $trace)
-{
-	$traced = (new Logger('prHtml'))
-		->pushHandler(new PrHtmlHandler())
-		->pushProcessor(static function(\Monolog\LogRecord $record) use ($trace): \Monolog\LogRecord
-		{
-			$record->extra['trace'] = $trace;
+foreach (['массивом' => ['<script>a</script>', 'x.php:1'], 'строкой' => '<script>a</script>'] as $kind => $trace) {
+    $traced = (new Logger('prHtml'))
+        ->pushHandler(new PrHtmlHandler())
+        ->pushProcessor(static function (\Monolog\LogRecord $record) use ($trace): \Monolog\LogRecord {
+            $record->extra['trace'] = $trace;
 
-			return $record;
-		});
-	$out = $printed(fn() => $traced->debug('трасса'));
-	Check::same('трассировка '.$kind.': разметки нет', str_contains($out, '<script'), false);
-	Check::same('трассировка '.$kind.': видна текстом', str_contains($out, '&lt;script&gt;'), true);
+            return $record;
+        });
+    $out = $printed(fn () => $traced->debug('трасса'));
+    Check::same('трассировка '.$kind.': разметки нет', str_contains($out, '<script'), false);
+    Check::same('трассировка '.$kind.': видна текстом', str_contains($out, '&lt;script&gt;'), true);
 }
 
 Check::finish();

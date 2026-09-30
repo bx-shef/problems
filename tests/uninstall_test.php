@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 /**
  * Удаление модуля: уносит своё, не трогает чужое, прибирает за 1.x.
@@ -29,38 +31,37 @@ use Bitrix\Main\EventManager;
 // region Заглушка ядра ////
 class CoreCalls
 {
-	/** @var list<string> */
-	public static array $unregistered = [];
+    /** @var list<string> */
+    public static array $unregistered = [];
 
-	public static int $cacheCleaned = 0;
+    public static int $cacheCleaned = 0;
 
-	/** @var list<array{0: string, 1: string}> что установщик копировал */
-	public static array $copied = [];
+    /** @var list<array{0: string, 1: string}> что установщик копировал */
+    public static array $copied = [];
 
-	public static function reset(): void
-	{
-		static::$unregistered = [];
-		static::$cacheCleaned = 0;
-		static::$copied = [];
-		EventManager::$unregistered = [];
-	}
+    public static function reset(): void
+    {
+        static::$unregistered = [];
+        static::$cacheCleaned = 0;
+        static::$copied = [];
+        EventManager::$unregistered = [];
+    }
 }
 
-if(!class_exists('CModule'))
-{
-	class CModule
-	{
-	}
+if (!class_exists('CModule')) {
+    class CModule
+    {
+    }
 }
 
 function IsModuleInstalled(string $moduleId): bool
 {
-	return false;
+    return false;
 }
 
 function UnRegisterModule(string $moduleId): void
 {
-	CoreCalls::$unregistered[] = $moduleId;
+    CoreCalls::$unregistered[] = $moduleId;
 }
 
 function RegisterModule(string $moduleId): void
@@ -70,21 +71,21 @@ function RegisterModule(string $moduleId): void
 /** Копирование каталогов ядра: запоминаем откуда и куда. */
 function CopyDirFiles(string $from, string $to, bool $rewrite = true, bool $recursive = false): bool
 {
-	CoreCalls::$copied[] = [$from, $to];
-	return true;
+    CoreCalls::$copied[] = [$from, $to];
+    return true;
 }
 
-$GLOBALS['APPLICATION'] = new class
-{
-	public function ThrowException(string $message): void {}
+$GLOBALS['APPLICATION'] = new class () {
+    public function ThrowException(string $message): void
+    {
+    }
 };
 
-$GLOBALS['CACHE_MANAGER'] = new class
-{
-	public function CleanAll(): void
-	{
-		CoreCalls::$cacheCleaned++;
-	}
+$GLOBALS['CACHE_MANAGER'] = new class () {
+    public function CleanAll(): void
+    {
+        CoreCalls::$cacheCleaned++;
+    }
 };
 
 // Установщик читает installEvents из настоящего .settings.php.
@@ -95,16 +96,15 @@ require_once $root.'/install/index.php';
 
 const NEIGHBOUR = 'shef.options';
 
-$given = static function(): shef_problems
-{
-	CoreCalls::reset();
-	Option::$values = [];
+$given = static function (): shef_problems {
+    CoreCalls::reset();
+    Option::$values = [];
 
-	Option::set('shef.problems', 'DEF_adminid', '7');
-	Option::set('shef.problems', 'DEF_dirid', '8');
-	Option::set(NEIGHBOUR, 'DEF_systemuserid', '9');
+    Option::set('shef.problems', 'DEF_adminid', '7');
+    Option::set('shef.problems', 'DEF_dirid', '8');
+    Option::set(NEIGHBOUR, 'DEF_systemuserid', '9');
 
-	return new shef_problems();
+    return new shef_problems();
 };
 
 Check::group('установщик требует shef.options 3.x');
@@ -146,20 +146,20 @@ $module->UnInstallEvents();
 // Класс — ровно как записан, без ltrim: ядро снимает регистрацию по точному
 // совпадению TO_CLASS, а 1.1.7 регистрировал его с ведущим «\».
 $unregistered = array_map(
-	static fn(array $call): string => $call[0].':'.$call[1].' -> '.$call[3].'::'.$call[4],
-	EventManager::$unregistered
+    static fn (array $call): string => $call[0].':'.$call[1].' -> '.$call[3].'::'.$call[4],
+    EventManager::$unregistered
 );
 
 Check::same('снято ровно три обработчика', count($unregistered), 3);
 Check::same(
-	'свой OnPageStart',
-	in_array('main:OnPageStart -> \\Shef\\Problems\\Integration\\Main\\Events::onPageStart', $unregistered, true),
-	true
+    'свой OnPageStart',
+    in_array('main:OnPageStart -> \\Shef\\Problems\\Integration\\Main\\Events::onPageStart', $unregistered, true),
+    true
 );
 Check::same(
-	'обработчик shef.uiclear из 1.x',
-	in_array('shef.uiclear:onBitrixMenuExtInitTopPanelUserMenu -> \\Shef\\Problems\\Integration\\Shef\\UiClear\\Events::onBitrixMenuExtInitTopPanelUserMenu', $unregistered, true),
-	true
+    'обработчик shef.uiclear из 1.x',
+    in_array('shef.uiclear:onBitrixMenuExtInitTopPanelUserMenu -> \\Shef\\Problems\\Integration\\Shef\\UiClear\\Events::onBitrixMenuExtInitTopPanelUserMenu', $unregistered, true),
+    true
 );
 
 Check::group('установка файлов: из того каталога, где стоит модуль');
@@ -168,13 +168,11 @@ Check::group('установка файлов: из того каталога, �
 $portal = sys_get_temp_dir().'/shef-problems-uninstall-'.getmypid();
 \Bitrix\Main\Application::$documentRoot = $portal.'/www';
 
-$touch = static function(string $path, string $content = 'x'): void
-{
-	if(!is_dir(dirname($path)))
-	{
-		mkdir(dirname($path), 0777, true);
-	}
-	file_put_contents($path, $content);
+$touch = static function (string $path, string $content = 'x'): void {
+    if (!is_dir(dirname($path))) {
+        mkdir(dirname($path), 0777, true);
+    }
+    file_put_contents($path, $content);
 };
 
 $touch($portal.'/www/bitrix/admin/settings.php');
@@ -191,9 +189,9 @@ Check::same('стили разложены из каталога модуля', 
 
 $logsPage = $portal.'/www/bitrix/admin/'.\Shef\Problems\Main\AdminPage::FILE;
 Check::same(
-	'заглушка страницы логов ведёт в этот модуль',
-	(string)@file_get_contents($logsPage),
-	\Shef\Problems\Main\AdminPage::getContent($portal.'/www', $root)
+    'заглушка страницы логов ведёт в этот модуль',
+    (string)@file_get_contents($logsPage),
+    \Shef\Problems\Main\AdminPage::getContent($portal.'/www', $root)
 );
 
 Check::group('удаление файлов: своё уносим, чужое и логи — нет');

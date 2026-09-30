@@ -1,4 +1,5 @@
 <?php
+
 $MESS['SH_PROBLEMS_LOGS_ACCESS_DENIED'] = 'Логи видит только администратор.';
 $MESS['SH_PROBLEMS_LOGS_TITLE'] = 'Логи';
 $MESS['SH_PROBLEMS_LOGS_TITLE_FILE'] = 'Лог #FILE#';

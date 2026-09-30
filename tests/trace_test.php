@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 /**
  * Трассировка записи лога: без warning и с первой строкой там, где позвали.
@@ -48,11 +50,11 @@ Check::same('пустой кадр тоже разбирается', $row->funct
 Check::group('Row: полный кадр');
 
 $row = new Row([
-	'file' => $root.'/local/php_interface/init.php',
-	'line' => 12,
-	'function' => 'handle',
-	'class' => 'Acme\\Demo',
-	'type' => '->',
+    'file' => $root.'/local/php_interface/init.php',
+    'line' => 12,
+    'function' => 'handle',
+    'class' => 'Acme\\Demo',
+    'type' => '->',
 ]);
 
 Check::same('корень сайта срезан', $row->file, '/local/php_interface/init.php');
@@ -65,12 +67,11 @@ Check::group('TraceProcessor: первая строка — место вызо�
 /**
  * Первая строка трассировки последней записи.
  */
-$firstLine = static function(TestHandler $handler): string
-{
-	$records = $handler->getRecords();
-	$trace = end($records)->extra['trace'] ?? [];
+$firstLine = static function (TestHandler $handler): string {
+    $records = $handler->getRecords();
+    $trace = end($records)->extra['trace'] ?? [];
 
-	return (string)($trace[0] ?? '');
+    return (string)($trace[0] ?? '');
 };
 
 // Процессор на обработчике — как в сервисах .settings.php.
@@ -96,11 +97,10 @@ $logger->log(Level::Warning, 'через log()');
 Check::same('через log()', $firstLine($handler), 'File: /tests/trace_test.php [line: '.$line.']');
 
 // Из функции: первым идёт место вызова логгера, а не функции.
-$callFromFunction = static function() use ($logger): int
-{
-	$line = __LINE__ + 1;
-	$logger->notice('из функции');
-	return $line;
+$callFromFunction = static function () use ($logger): int {
+    $line = __LINE__ + 1;
+    $logger->notice('из функции');
+    return $line;
 };
 
 $line = $callFromFunction();
@@ -112,18 +112,14 @@ $handler = new TestHandler(Level::Debug);
 $handler->pushProcessor(new TraceProcessor(true));
 $logger = (new Logger('test'))->pushHandler($handler);
 
-$throwing = static function(): never
-{
-	throw new RuntimeException('сбой');
+$throwing = static function (): never {
+    throw new RuntimeException('сбой');
 };
 
-try
-{
-	$throwing();
-}
-catch(RuntimeException $exception)
-{
-	$logger->error($exception);
+try {
+    $throwing();
+} catch (RuntimeException $exception) {
+    $logger->error($exception);
 }
 
 $records = $handler->getRecords();
@@ -137,25 +133,21 @@ Check::group('Throwable\\Manager: трассировка ошибки без а�
 
 ini_set('zend.exception_ignore_args', '0');
 ini_set('zend.exception_string_param_max_len', '15');
-$login = static function(string $user, string $password): void
-{
-	throw new RuntimeException('вход не удался');
+$login = static function (string $user, string $password): void {
+    throw new RuntimeException('вход не удался');
 };
-try
-{
-	$login('admin', 'S3cretPass1');
-}
-catch(RuntimeException $exception)
-{
+try {
+    $login('admin', 'S3cretPass1');
+} catch (RuntimeException $exception) {
 }
 Check::same('аргументы в трассировке PHP есть — проверка не впустую', str_contains($exception->getTraceAsString(), 'S3cretPass1'), true);
 $error = \Shef\Problems\Throwable\Manager::buildError($exception);
 Check::same('в тексте ошибки трассировка есть', str_contains($error->getMessage(), 'Trace: #0 '), true);
 Check::same('пароля в тексте ошибки нет', str_contains($error->getMessage(), 'S3cretPass1'), false);
 Check::same(
-	'кадр встроенной функции без file — без warning',
-	\Shef\Problems\Throwable\Manager::traceToString([['function' => 'array_map']]),
-	'#0 [internal function]: array_map()'.PHP_EOL.'#1 {main}'
+    'кадр встроенной функции без file — без warning',
+    \Shef\Problems\Throwable\Manager::traceToString([['function' => 'array_map']]),
+    '#0 [internal function]: array_map()'.PHP_EOL.'#1 {main}'
 );
 
 Check::finish();

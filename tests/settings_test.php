@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 /**
  * .settings.php: ссылки наружу обязаны никуда не висеть.
@@ -22,22 +24,20 @@ use Bitrix\Main\Application;
 use Bitrix\Main\Loader;
 
 /** Файл класса модуля по соглашению автозагрузки либо null. */
-$classFile = static function(string $class) use ($root): null|string
-{
-	$class = ltrim($class, '\\');
-	if(!str_starts_with($class, 'Shef\\Problems\\'))
-	{
-		return null;
-	}
+$classFile = static function (string $class) use ($root): null|string {
+    $class = ltrim($class, '\\');
+    if (!str_starts_with($class, 'Shef\\Problems\\')) {
+        return null;
+    }
 
-	$path = $root.'/lib/'.mb_strtolower(str_replace('\\', '/', mb_substr($class, mb_strlen('Shef\\Problems\\')))).'.php';
+    $path = $root.'/lib/'.mb_strtolower(str_replace('\\', '/', mb_substr($class, mb_strlen('Shef\\Problems\\')))).'.php';
 
-	return is_file($path) ? $path : null;
+    return is_file($path) ? $path : null;
 };
 
-$hasMethod = static fn(string $file, string $method): bool => 1 === preg_match(
-	'/function\s+'.preg_quote($method, '/').'\s*\(/',
-	(string)file_get_contents($file)
+$hasMethod = static fn (string $file, string $method): bool => 1 === preg_match(
+    '/function\s+'.preg_quote($method, '/').'\s*\(/',
+    (string)file_get_contents($file)
 );
 
 // Корень сайта — каталог над репозиторием: модуль лежит в нём, как в
@@ -50,12 +50,10 @@ Check::group('структура файла');
 Check::same('.settings.php вернул массив', is_array($settings), true);
 
 $shape = [];
-foreach($settings as $key => $section)
-{
-	if(!is_array($section) || !array_key_exists('value', $section) || !array_key_exists('readonly', $section))
-	{
-		$shape[] = $key;
-	}
+foreach ($settings as $key => $section) {
+    if (!is_array($section) || !array_key_exists('value', $section) || !array_key_exists('readonly', $section)) {
+        $shape[] = $key;
+    }
 }
 
 Check::same('у каждой секции есть value и readonly', $shape, []);
@@ -68,9 +66,9 @@ $namespaces = $settings['registerNamespace']['value'];
 Check::same('свой namespace не регистрируется — его даёт соглашение', isset($namespaces['Shef\\Problems']), false);
 Check::same('без shef.options — своя копия Monolog', array_keys($namespaces), ['Monolog']);
 Check::same(
-	'путь своей копии ведёт в vendor модуля',
-	is_file(Application::getDocumentRoot().($namespaces['Monolog'] ?? '').'/Logger.php'),
-	true
+    'путь своей копии ведёт в vendor модуля',
+    is_file(Application::getDocumentRoot().($namespaces['Monolog'] ?? '').'/Logger.php'),
+    true
 );
 
 // shef.options есть, но его project-context.php падает: модулю без логгера
@@ -81,9 +79,9 @@ Loader::$local['modules/shef.options/project-context.php'] = $broken;
 
 $settings = require $root.'/.settings.php';
 Check::same(
-	'сломанный project-context.php — своя копия',
-	$settings['registerNamespace']['value'],
-	$namespaces
+    'сломанный project-context.php — своя копия',
+    $settings['registerNamespace']['value'],
+    $namespaces
 );
 
 unlink($broken);
@@ -95,9 +93,9 @@ Application::$documentRoot = '/home/bitrix/ext_www/site2';
 Loader::$local['modules/shef.problems'] = '/home/bitrix/ext_www/site2/local/modules/shef.problems';
 $settings = require $root.'/.settings.php';
 Check::same(
-	'модуль через симлинк /local — путь от корня сайта',
-	$settings['registerNamespace']['value']['Monolog'] ?? null,
-	'/local/modules/shef.problems/vendor/monolog/monolog/src/Monolog'
+    'модуль через симлинк /local — путь от корня сайта',
+    $settings['registerNamespace']['value']['Monolog'] ?? null,
+    '/local/modules/shef.problems/vendor/monolog/monolog/src/Monolog'
 );
 Loader::$local = [];
 
@@ -105,9 +103,9 @@ Loader::$local = [];
 Application::$documentRoot = '/somewhere/else';
 $settings = require $root.'/.settings.php';
 Check::same(
-	'модуль вне корня сайта — путь по умолчанию',
-	$settings['registerNamespace']['value']['Monolog'] ?? null,
-	'/bitrix/modules/shef.problems/vendor/monolog/monolog/src/Monolog'
+    'модуль вне корня сайта — путь по умолчанию',
+    $settings['registerNamespace']['value']['Monolog'] ?? null,
+    '/bitrix/modules/shef.problems/vendor/monolog/monolog/src/Monolog'
 );
 
 Check::group('registerNamespace — shef.options решает, Composer или своя копия');
@@ -119,23 +117,22 @@ Application::$documentRoot = dirname($root);
 Loader::$local['modules/shef.options/project-context.php'] = $root.'/tests/stub/project-context.php';
 
 $project = sys_get_temp_dir().'/shef-problems-composer-'.getmypid();
-register_shutdown_function(static fn() => exec('rm -rf '.escapeshellarg($project)));
+register_shutdown_function(static fn () => exec('rm -rf '.escapeshellarg($project)));
 mkdir($project.'/vendor', 0777, true);
 file_put_contents($project.'/composer.json', '{}');
 
 /** Что решит .settings.php при данной настройке Composer в ядре. */
-$decide = static function(?array $composer) use ($root): array
-{
-	// ShComposerContext — синглтон: каждый случай читает настройки заново.
-	(new ReflectionProperty(ShComposerContext::class, 'instances'))->setValue(null, []);
-	\Bitrix\Main\Config\Configuration::$values = null === $composer ? [] : ['composer' => $composer];
+$decide = static function (?array $composer) use ($root): array {
+    // ShComposerContext — синглтон: каждый случай читает настройки заново.
+    (new ReflectionProperty(ShComposerContext::class, 'instances'))->setValue(null, []);
+    \Bitrix\Main\Config\Configuration::$values = null === $composer ? [] : ['composer' => $composer];
 
-	return (require $root.'/.settings.php')['registerNamespace']['value'];
+    return (require $root.'/.settings.php')['registerNamespace']['value'];
 };
 
 require_once $root.'/tests/stub/project-context.php';
 $own = [
-	'Monolog' => '/'.basename($root).'/vendor/monolog/monolog/src/Monolog',
+    'Monolog' => '/'.basename($root).'/vendor/monolog/monolog/src/Monolog',
 ];
 
 Check::same('Composer на проекте нет — своя копия', $decide(null), $own);
@@ -160,21 +157,18 @@ Check::same('installDir не пуст', !empty($installDir), true);
 $missing = [];
 $wrongTarget = [];
 
-foreach($installDir as $i => $map)
-{
-	$from = (string)($map['from'] ?? '');
-	$to = (string)($map['to'] ?? '');
+foreach ($installDir as $i => $map) {
+    $from = (string)($map['from'] ?? '');
+    $to = (string)($map['to'] ?? '');
 
-	if($from === '' || !is_dir($root.$from))
-	{
-		$missing[] = sprintf('запись %d: каталога %s в репозитории нет', $i, $from);
-	}
+    if ($from === '' || !is_dir($root.$from)) {
+        $missing[] = sprintf('запись %d: каталога %s в репозитории нет', $i, $from);
+    }
 
-	// Каталог модуля браузеру недоступен, поэтому «куда» — всегда под /bitrix/.
-	if(!str_starts_with($to, '/bitrix/'))
-	{
-		$wrongTarget[] = sprintf('запись %d: to = %s', $i, $to);
-	}
+    // Каталог модуля браузеру недоступен, поэтому «куда» — всегда под /bitrix/.
+    if (!str_starts_with($to, '/bitrix/')) {
+        $wrongTarget[] = sprintf('запись %d: to = %s', $i, $to);
+    }
 }
 
 Check::same('каждый from существует', $missing, []);
@@ -183,29 +177,23 @@ Check::same('каждый to ведёт под /bitrix/', $wrongTarget, []);
 Check::group('installEvents — обработчики существуют');
 
 $brokenHandlers = [];
-foreach($settings['installEvents']['value'] as $i => $event)
-{
-	$class = (string)($event['to']['class'] ?? '');
-	$method = (string)($event['to']['function'] ?? '');
-	$file = $classFile($class);
+foreach ($settings['installEvents']['value'] as $i => $event) {
+    $class = (string)($event['to']['class'] ?? '');
+    $method = (string)($event['to']['function'] ?? '');
+    $file = $classFile($class);
 
-	if(($event['to']['module'] ?? '') !== 'shef.problems')
-	{
-		$brokenHandlers[] = sprintf('запись %d: обработчик не в этом модуле', $i);
-	}
-	elseif(null === $file)
-	{
-		$brokenHandlers[] = sprintf('запись %d: класса %s нет', $i, $class);
-	}
-	elseif(!$hasMethod($file, $method))
-	{
-		$brokenHandlers[] = sprintf('запись %d: метода %s::%s нет', $i, $class, $method);
-	}
+    if (($event['to']['module'] ?? '') !== 'shef.problems') {
+        $brokenHandlers[] = sprintf('запись %d: обработчик не в этом модуле', $i);
+    } elseif (null === $file) {
+        $brokenHandlers[] = sprintf('запись %d: класса %s нет', $i, $class);
+    } elseif (!$hasMethod($file, $method)) {
+        $brokenHandlers[] = sprintf('запись %d: метода %s::%s нет', $i, $class, $method);
+    }
 }
 
 Check::same('каждый обработчик — существующий метод', $brokenHandlers, []);
 
-$fromModules = array_unique(array_map(static fn(array $event): string => $event['from']['module'], $settings['installEvents']['value']));
+$fromModules = array_unique(array_map(static fn (array $event): string => $event['from']['module'], $settings['installEvents']['value']));
 Check::same('события только ядра — от shef.uiclear модуль не зависит', array_values($fromModules), ['main']);
 
 Check::group('services — каждый логгер enum на месте');
@@ -214,31 +202,25 @@ require_once $root.'/tests/stub/autoload.php';
 
 $services = $settings['services']['value'];
 $missingServices = [];
-foreach(\Shef\Problems\Logger::cases() as $case)
-{
-	if(!isset($services[$case->getServiceName()]))
-	{
-		$missingServices[] = $case->name;
-	}
+foreach (\Shef\Problems\Logger::cases() as $case) {
+    if (!isset($services[$case->getServiceName()])) {
+        $missingServices[] = $case->name;
+    }
 }
 
 Check::same('у каждого случая Logger есть сервис', $missingServices, []);
 
 $badHandlerType = [];
-foreach($services as $name => $service)
-{
-	foreach((array)($service['handlerType'] ?? []) as $type)
-	{
-		if(!in_array($type, \Shef\Problems\Main\Constants::getHandlerTypeList(), true))
-		{
-			$badHandlerType[] = $name.': '.$type;
-		}
-	}
+foreach ($services as $name => $service) {
+    foreach ((array)($service['handlerType'] ?? []) as $type) {
+        if (!in_array($type, \Shef\Problems\Main\Constants::getHandlerTypeList(), true)) {
+            $badHandlerType[] = $name.': '.$type;
+        }
+    }
 
-	if(isset($service['className']) && !class_exists($service['className']))
-	{
-		$badHandlerType[] = $name.': класса '.$service['className'].' нет';
-	}
+    if (isset($service['className']) && !class_exists($service['className'])) {
+        $badHandlerType[] = $name.': класса '.$service['className'].' нет';
+    }
 }
 
 Check::same('handlerType из известных, className существует', $badHandlerType, []);

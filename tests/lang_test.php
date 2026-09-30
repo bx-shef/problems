@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 /**
  * У каждой подписи есть перевод: код из Loc::getMessage('X') в файле модуля
@@ -22,36 +24,30 @@ Check::same('git ls-files отработал', $code, 0);
 
 $checked = 0;
 $missing = [];
-foreach($tracked as $path)
-{
-	if(array_filter($skip, static fn(string $dir): bool => str_starts_with($path, $dir)))
-	{
-		continue;
-	}
+foreach ($tracked as $path) {
+    if (array_filter($skip, static fn (string $dir): bool => str_starts_with($path, $dir))) {
+        continue;
+    }
 
-	// Только литерал целиком: 'SH_X'.$code собирается в рантайме, его не сверить.
-	preg_match_all("/Loc::getMessage\\(\\s*'([A-Z0-9_]+)'\\s*[,)]/", (string)file_get_contents($root.'/'.$path), $found);
-	$codes = array_values(array_filter(array_unique($found[1]), static fn(string $code): bool => !str_starts_with($code, 'MAIN_')));
-	if(empty($codes))
-	{
-		continue;
-	}
+    // Только литерал целиком: 'SH_X'.$code собирается в рантайме, его не сверить.
+    preg_match_all("/Loc::getMessage\\(\\s*'([A-Z0-9_]+)'\\s*[,)]/", (string)file_get_contents($root.'/'.$path), $found);
+    $codes = array_values(array_filter(array_unique($found[1]), static fn (string $code): bool => !str_starts_with($code, 'MAIN_')));
+    if (empty($codes)) {
+        continue;
+    }
 
-	$MESS = [];
-	$langFile = $root.'/lang/ru/'.$path;
-	if(is_file($langFile))
-	{
-		include $langFile;
-	}
+    $MESS = [];
+    $langFile = $root.'/lang/ru/'.$path;
+    if (is_file($langFile)) {
+        include $langFile;
+    }
 
-	foreach($codes as $code)
-	{
-		$checked++;
-		if(!isset($MESS[$code]) || '' === $MESS[$code])
-		{
-			$missing[] = $path.': '.$code;
-		}
-	}
+    foreach ($codes as $code) {
+        $checked++;
+        if (!isset($MESS[$code]) || '' === $MESS[$code]) {
+            $missing[] = $path.': '.$code;
+        }
+    }
 }
 
 Check::group('подписи переведены');

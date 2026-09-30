@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 /**
  * Лог с потолком размера: история есть, диск не забивается.
@@ -24,12 +26,11 @@ $dir = sys_get_temp_dir().'/shef-problems-capped-'.getmypid();
 mkdir($dir, 0777, true);
 $file = $dir.'/log.log';
 
-$logger = static function(int $maxBytes) use ($file): Logger
-{
-	return (new Logger('log'))->pushHandler(
-		(new CappedStreamHandler(filename: $file, level: Level::Debug, maxBytes: $maxBytes))
-			->setFormatter(new LineFormatter('%message%'.PHP_EOL))
-	);
+$logger = static function (int $maxBytes) use ($file): Logger {
+    return (new Logger('log'))->pushHandler(
+        (new CappedStreamHandler(filename: $file, level: Level::Debug, maxBytes: $maxBytes))
+            ->setFormatter(new LineFormatter('%message%'.PHP_EOL))
+    );
 };
 
 Check::group('ниже потолка — дописывает, как обычный лог');
@@ -47,9 +48,8 @@ Check::same('новый запрос дописал, а не стёр', substr_c
 Check::group('перерос потолок — откладывает и начинает заново');
 
 $log = $logger(100);
-for($i = 1; $i <= 40; $i++)
-{
-	$log->debug(sprintf('строка %02d', $i));
+for ($i = 1; $i <= 40; $i++) {
+    $log->debug(sprintf('строка %02d', $i));
 }
 
 clearstatcache();
@@ -65,9 +65,8 @@ Check::same('лишних файлов нет — только текущий и
 Check::group('потолок 0 — без ограничения');
 
 $log = $logger(0);
-for($i = 1; $i <= 40; $i++)
-{
-	$log->debug(sprintf('строка %02d', $i));
+for ($i = 1; $i <= 40; $i++) {
+    $log->debug(sprintf('строка %02d', $i));
 }
 unlink($file.'.1');
 $log->debug('ещё');

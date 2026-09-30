@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Shef\Problems\Integration\Main;
 
@@ -18,43 +20,42 @@ Loc::loadMessages(__FILE__);
  */
 class Events
 {
-	protected static function getModuleId(): string
-	{
-		return Constants::MODULE_ID;
-	}
-	
-	/**
-	 * Автоподключение css модуля для админки
-	 *
-	 * @throws LoaderException
-	 */
-	public static function onPageStart(): void
-	{
-		// В CLI и в агентах контекста запроса может не быть.
-		$request = Context::getCurrent()?->getRequest();
-		if($request?->isAdminSection() === true)
-		{
-			Extension::load(Constants::getExtensionList());
-		}
-	}
-	
-	/**
-	 * Регистрация типов событий для \CEventLog
-	 *
-	 * @return array
-	 * @see \CEventLog::GetEventTypes
-	 */
-	public static function onEventLogGetAuditTypes(): array
-	{
-		return array_merge(
-			...array_map(
-			function (string $code)
-			{
-				return [
-					$code => Loc::getMessage('SH_PROBLEMS_AUDIT_TYPE_'.$code)
-				];
-			},
-			Constants::getAuditTypeList()
-		));
-	}
+    protected static function getModuleId(): string
+    {
+        return Constants::MODULE_ID;
+    }
+
+    /**
+     * Автоподключение css модуля для админки
+     *
+     * @throws LoaderException
+     */
+    public static function onPageStart(): void
+    {
+        // В CLI и в агентах контекста запроса может не быть.
+        $request = Context::getCurrent()?->getRequest();
+        if ($request?->isAdminSection() === true) {
+            Extension::load(Constants::getExtensionList());
+        }
+    }
+
+    /**
+     * Регистрация типов событий для \CEventLog
+     *
+     * @return array
+     * @see \CEventLog::GetEventTypes
+     */
+    public static function onEventLogGetAuditTypes(): array
+    {
+        return array_merge(
+            ...array_map(
+                function (string $code) {
+                    return [
+                        $code => Loc::getMessage('SH_PROBLEMS_AUDIT_TYPE_'.$code)
+                    ];
+                },
+                Constants::getAuditTypeList()
+            )
+        );
+    }
 }

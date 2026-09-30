@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Shef\Problems\Integration\BizProc;
 
@@ -11,4 +13,5 @@ use CBPActivity;
  * @see: \Shef\Problems\Main\Utils::workDateAdd
  */
 class EmptyActivity extends CBPActivity
-{}
+{
+}

@@ -16,171 +16,177 @@
 
 namespace Shef\Options\Main\Options
 {
-	enum TypeUIAlert: string
-	{
-		case Error = 'ui-alert-danger';
-		case Note = 'ui-alert-default';
-		case Warning = 'ui-alert-warning';
-	}
+    enum TypeUIAlert: string
+    {
+        case Error = 'ui-alert-danger';
+        case Note = 'ui-alert-default';
+        case Warning = 'ui-alert-warning';
+    }
 
-	abstract class AOption
-	{
-		protected string $title = '';
-		protected string $description = '';
+    abstract class AOption
+    {
+        protected string $title = '';
+        protected string $description = '';
 
-		public function __construct(protected readonly string $code) {}
+        public function __construct(protected readonly string $code)
+        {
+        }
 
-		public function getCode(): string
-		{
-			return $this->code;
-		}
+        public function getCode(): string
+        {
+            return $this->code;
+        }
 
-		public function setTitle(string $value): static
-		{
-			$this->title = $value;
-			return $this;
-		}
+        public function setTitle(string $value): static
+        {
+            $this->title = $value;
+            return $this;
+        }
 
-		public function getTitle(): string
-		{
-			return $this->title;
-		}
+        public function getTitle(): string
+        {
+            return $this->title;
+        }
 
-		public function setDescription(string $value): static
-		{
-			$this->description = $value;
-			return $this;
-		}
+        public function setDescription(string $value): static
+        {
+            $this->description = $value;
+            return $this;
+        }
 
-		public function getDescription(): string
-		{
-			return $this->description;
-		}
-	}
+        public function getDescription(): string
+        {
+            return $this->description;
+        }
+    }
 
-	class RowInfo extends AOption
-	{
-		public ?TypeUIAlert $type = null;
+    class RowInfo extends AOption
+    {
+        public ?TypeUIAlert $type = null;
 
-		public function setType(TypeUIAlert $value): static
-		{
-			$this->type = $value;
-			return $this;
-		}
-	}
+        public function setType(TypeUIAlert $value): static
+        {
+            $this->type = $value;
+            return $this;
+        }
+    }
 
-	class Enum extends AOption
-	{
-		public int $showRows = 0;
+    class Enum extends AOption
+    {
+        public int $showRows = 0;
 
-		public function setShowRows(int $value): static
-		{
-			$this->showRows = $value;
-			return $this;
-		}
-	}
+        public function setShowRows(int $value): static
+        {
+            $this->showRows = $value;
+            return $this;
+        }
+    }
 
-	class Users extends Enum
-	{
-		public array $filter = [];
+    class Users extends Enum
+    {
+        public array $filter = [];
 
-		public function initSimpleUserList(array $filter, ?array $select = null, ?array $order = null): static
-		{
-			$this->filter = $filter;
-			return $this;
-		}
-	}
+        public function initSimpleUserList(array $filter, ?array $select = null, ?array $order = null): static
+        {
+            $this->filter = $filter;
+            return $this;
+        }
+    }
 
-	class NumberInt extends AOption {}
+    class NumberInt extends AOption
+    {
+    }
 
-	class Tab
-	{
-		protected string $name = '';
-		protected string $title = '';
-		/** @var AOption[] */
-		protected array $options = [];
+    class Tab
+    {
+        protected string $name = '';
+        protected string $title = '';
+        /** @var AOption[] */
+        protected array $options = [];
 
-		public function __construct(protected readonly string $code) {}
+        public function __construct(protected readonly string $code)
+        {
+        }
 
-		public function getCode(): string
-		{
-			return $this->code;
-		}
+        public function getCode(): string
+        {
+            return $this->code;
+        }
 
-		public function setName(string $value): static
-		{
-			$this->name = $value;
-			return $this;
-		}
+        public function setName(string $value): static
+        {
+            $this->name = $value;
+            return $this;
+        }
 
-		public function getName(): string
-		{
-			return $this->name;
-		}
+        public function getName(): string
+        {
+            return $this->name;
+        }
 
-		public function setTitle(string $value): static
-		{
-			$this->title = $value;
-			return $this;
-		}
+        public function setTitle(string $value): static
+        {
+            $this->title = $value;
+            return $this;
+        }
 
-		public function addOption(AOption $value): static
-		{
-			$this->options[] = $value;
-			return $this;
-		}
+        public function addOption(AOption $value): static
+        {
+            $this->options[] = $value;
+            return $this;
+        }
 
-		/** @return AOption[] */
-		public function getOptionList(): array
-		{
-			return $this->options;
-		}
-	}
+        /** @return AOption[] */
+        public function getOptionList(): array
+        {
+            return $this->options;
+        }
+    }
 }
 
 namespace Shef\Options\Main
 {
-	class Constants
-	{
-		/** Служебный пользователь — настройка shef.options. */
-		public static function getSystemUserId(): int
-		{
-			return 1;
-		}
-	}
+    class Constants
+    {
+        /** Служебный пользователь — настройка shef.options. */
+        public static function getSystemUserId(): int
+        {
+            return 1;
+        }
+    }
 }
 
-namespace
-{
-	use Bitrix\Main\Result;
-	use Shef\Options\Main\Options;
+namespace {
+    use Bitrix\Main\Result;
+    use Shef\Options\Main\Options;
 
-	class ShOptionsConfig
-	{
-		/** @var Options\Tab[] */
-		private array $tabs = [];
+    class ShOptionsConfig
+    {
+        /** @var Options\Tab[] */
+        private array $tabs = [];
 
-		protected function __construct(public readonly string $moduleId) {}
+        protected function __construct(public readonly string $moduleId)
+        {
+        }
 
-		public static function getInstance(string $moduleId): Result
-		{
-			return (new Result())->setData(['OPTIONS' => new static($moduleId)]);
-		}
+        public static function getInstance(string $moduleId): Result
+        {
+            return (new Result())->setData(['OPTIONS' => new static($moduleId)]);
+        }
 
-		public function addTab(null|Options\Tab $tab): static
-		{
-			if(null !== $tab)
-			{
-				$this->tabs[$tab->getCode()] = $tab;
-			}
+        public function addTab(null|Options\Tab $tab): static
+        {
+            if (null !== $tab) {
+                $this->tabs[$tab->getCode()] = $tab;
+            }
 
-			return $this;
-		}
+            return $this;
+        }
 
-		/** @return Options\Tab[] */
-		public function get(): array
-		{
-			return array_values($this->tabs);
-		}
-	}
+        /** @return Options\Tab[] */
+        public function get(): array
+        {
+            return array_values($this->tabs);
+        }
+    }
 }

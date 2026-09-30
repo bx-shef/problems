@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 /**
  * Фронт: имя расширения сходится с раскладкой установщика.
@@ -24,8 +26,8 @@ $settings = require $root.'/.settings.php';
 
 /** Куда установщик кладёт install/js. */
 $jsMap = array_values(array_filter(
-	$settings['installDir']['value'],
-	static fn(array $map): bool => $map['from'] === '/install/js'
+    $settings['installDir']['value'],
+    static fn (array $map): bool => $map['from'] === '/install/js'
 ));
 
 Check::group('раскладка');
@@ -37,11 +39,10 @@ Check::same('каталог расширений — через дефис', Con
 /**
  * Публичный путь расширения -> файл config.php в репозитории.
  */
-$toRepo = static function(string $extension) use ($root, $jsMap): string
-{
-	$public = '/bitrix/js/'.str_replace('.', '/', $extension);
+$toRepo = static function (string $extension) use ($root, $jsMap): string {
+    $public = '/bitrix/js/'.str_replace('.', '/', $extension);
 
-	return $root.$jsMap[0]['from'].mb_substr($public, mb_strlen($jsMap[0]['to'])).'/config.php';
+    return $root.$jsMap[0]['from'].mb_substr($public, mb_strlen($jsMap[0]['to'])).'/config.php';
 };
 
 Check::group('каждое расширение на месте');
@@ -49,44 +50,36 @@ Check::group('каждое расширение на месте');
 $broken = [];
 $relBroken = [];
 
-foreach(Constants::getExtensionList() as $extension)
-{
-	if(!str_starts_with('/bitrix/js/'.str_replace('.', '/', $extension), Constants::getPublicJsDir().'/'))
-	{
-		$broken[] = $extension.': не в каталоге модуля';
-		continue;
-	}
+foreach (Constants::getExtensionList() as $extension) {
+    if (!str_starts_with('/bitrix/js/'.str_replace('.', '/', $extension), Constants::getPublicJsDir().'/')) {
+        $broken[] = $extension.': не в каталоге модуля';
+        continue;
+    }
 
-	$config = $toRepo($extension);
-	if(!is_file($config))
-	{
-		$broken[] = $extension.': нет '.mb_substr($config, mb_strlen($root));
-		continue;
-	}
+    $config = $toRepo($extension);
+    if (!is_file($config)) {
+        $broken[] = $extension.': нет '.mb_substr($config, mb_strlen($root));
+        continue;
+    }
 
-	// config.php расширения требует пролог.
-	if(!defined('B_PROLOG_INCLUDED'))
-	{
-		define('B_PROLOG_INCLUDED', true);
-	}
+    // config.php расширения требует пролог.
+    if (!defined('B_PROLOG_INCLUDED')) {
+        define('B_PROLOG_INCLUDED', true);
+    }
 
-	$description = require $config;
+    $description = require $config;
 
-	foreach((array)($description['css'] ?? []) as $css)
-	{
-		if(!is_file(dirname($config).'/'.$css))
-		{
-			$broken[] = $extension.': нет стиля '.$css;
-		}
-	}
+    foreach ((array)($description['css'] ?? []) as $css) {
+        if (!is_file(dirname($config).'/'.$css)) {
+            $broken[] = $extension.': нет стиля '.$css;
+        }
+    }
 
-	foreach((array)($description['rel'] ?? []) as $rel)
-	{
-		if(str_starts_with($rel, 'shef-problems.') && !in_array($rel, Constants::getExtensionList(), true))
-		{
-			$relBroken[] = $extension.' -> '.$rel;
-		}
-	}
+    foreach ((array)($description['rel'] ?? []) as $rel) {
+        if (str_starts_with($rel, 'shef-problems.') && !in_array($rel, Constants::getExtensionList(), true)) {
+            $relBroken[] = $extension.' -> '.$rel;
+        }
+    }
 }
 
 Check::same('config.php и стили каждого расширения существуют', $broken, []);
@@ -95,8 +88,8 @@ Check::same('зависимости между своими расширения
 Check::group('в репозитории нет лишних расширений');
 
 $onDisk = array_map(
-	static fn(string $path): string => 'shef-problems.'.basename(dirname($path)),
-	glob($root.'/install/js/shef-problems/*/config.php') ?: []
+    static fn (string $path): string => 'shef-problems.'.basename(dirname($path)),
+    glob($root.'/install/js/shef-problems/*/config.php') ?: []
 );
 sort($onDisk);
 $declared = Constants::getExtensionList();

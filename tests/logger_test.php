@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 /**
  * Логгер модуля принимает не только строку.
@@ -32,12 +34,11 @@ $handler = new TestHandler(Level::Debug);
 $logger = (new Logger('test'))->pushHandler($handler);
 
 /** Сообщение и контекст последней записи. */
-$last = static function() use ($handler): array
-{
-	$records = $handler->getRecords();
-	$record = end($records);
+$last = static function () use ($handler): array {
+    $records = $handler->getRecords();
+    $record = end($records);
 
-	return [$record->message, $record->context];
+    return [$record->message, $record->context];
 };
 
 Check::group('строка и Stringable');
@@ -45,7 +46,12 @@ Check::group('строка и Stringable');
 $logger->info('просто текст', ['a' => 1]);
 Check::same('строка', $last(), ['просто текст', ['a' => 1]]);
 
-$logger->info(new class implements Stringable { public function __toString(): string { return 'из объекта'; } });
+$logger->info(new class () implements Stringable {
+    public function __toString(): string
+    {
+        return 'из объекта';
+    }
+});
 Check::same('Stringable', $last()[0], 'из объекта');
 
 Check::group('исключение');
@@ -66,8 +72,8 @@ Check::same('Error: сообщение с кодом', $message, 'Не запо�
 Check::same('Error: в контексте', $context[LoggerConverter\BitrixErrorStrategy::ContextKey][0]['code'] ?? null, 'EMPTY_FIELD');
 
 $result = (new Result())
-	->addError(new Error('первая', 1))
-	->addError(new Error('вторая', 2));
+    ->addError(new Error('первая', 1))
+    ->addError(new Error('вторая', 2));
 $logger->error($result);
 [$message, $context] = $last();
 Check::same('Result с ошибками: первая и счётчик', $message, '[Result::Error: 2] первая [code: 1]');
@@ -83,23 +89,33 @@ Check::group('массив и контракты');
 $logger->debug(['a' => 1]);
 Check::same('массив', $last(), ['Array', ['_message' => ['a' => 1]]]);
 
-$logger->debug(new class implements Arrayable { public function toArray(): array { return ['b' => 2]; } });
+$logger->debug(new class () implements Arrayable {
+    public function toArray(): array
+    {
+        return ['b' => 2];
+    }
+});
 Check::same('Arrayable', $last(), ['Arrayable', ['_message' => ['b' => 2]]]);
 
-$logger->debug(new class implements JsonSerializable { public function jsonSerialize(): mixed { return ['c' => 3]; } });
+$logger->debug(new class () implements JsonSerializable {
+    public function jsonSerialize(): mixed
+    {
+        return ['c' => 3];
+    }
+});
 Check::same('JsonSerializable', $last(), ['JsonSerializable', ['_message' => ['c' => 3]]]);
 
 Check::group('то, что не превратить');
 
-Check::throws('число', InvalidArgumentException::class, fn() => $logger->info(42));
-Check::throws('объект без контракта', InvalidArgumentException::class, fn() => $logger->info(new stdClass()));
+Check::throws('число', InvalidArgumentException::class, fn () => $logger->info(42));
+Check::throws('объект без контракта', InvalidArgumentException::class, fn () => $logger->info(new stdClass()));
 
 // Стратегия, которой подсунули чужой тип, отвечает внятным исключением, а не
 // TypeError из собственной проверки.
 Check::throws(
-	'ThrowableStrategy на строке',
-	InvalidArgumentException::class,
-	fn() => (new LoggerConverter\ThrowableStrategy())->doMessage('не исключение')
+    'ThrowableStrategy на строке',
+    InvalidArgumentException::class,
+    fn () => (new LoggerConverter\ThrowableStrategy())->doMessage('не исключение')
 );
 
 Check::group('сбой записи не роняет вызывающий код');
@@ -114,32 +130,29 @@ $phpLog = $sandbox.'/php.log';
 $previousErrorLog = ini_set('error_log', $phpLog);
 
 $broken = (new Logger('broken'))->pushHandler(
-	new Shef\Problems\Integration\Monolog\Handler\CappedStreamHandler($sandbox.'/not-a-dir/sh_log/x.log')
+    new Shef\Problems\Integration\Monolog\Handler\CappedStreamHandler($sandbox.'/not-a-dir/sh_log/x.log')
 );
 $thrown = null;
-try
-{
-	$broken->error('обмен упал');
-	$broken->withName('renamed')->error('и под другим именем');
-	// «Файл» — каталог: fopen() не выйдет, и Monolog дописывает к сообщению
-	// исключения саму запись с контекстом.
-	mkdir($sandbox.'/dir.log');
-	(new Logger('unopened'))
-		->pushHandler(new Shef\Problems\Integration\Monolog\Handler\CappedStreamHandler($sandbox.'/dir.log'))
-		->error('обмен упал', ['token' => 'S3cretToken']);
-}
-catch(Throwable $throwable)
-{
-	$thrown = $throwable::class;
+try {
+    $broken->error('обмен упал');
+    $broken->withName('renamed')->error('и под другим именем');
+    // «Файл» — каталог: fopen() не выйдет, и Monolog дописывает к сообщению
+    // исключения саму запись с контекстом.
+    mkdir($sandbox.'/dir.log');
+    (new Logger('unopened'))
+        ->pushHandler(new Shef\Problems\Integration\Monolog\Handler\CappedStreamHandler($sandbox.'/dir.log'))
+        ->error('обмен упал', ['token' => 'S3cretToken']);
+} catch (Throwable $throwable) {
+    $thrown = $throwable::class;
 }
 ini_set('error_log', (string)$previousErrorLog);
 $phpLogText = (string)@file_get_contents($phpLog);
 
 Check::same('исключения наружу нет', $thrown, null);
 Check::same(
-	'сбой — в лог PHP, с именем логгера',
-	str_contains($phpLogText, 'shef.problems: запись логгера broken не прошла: UnexpectedValueException'),
-	true
+    'сбой — в лог PHP, с именем логгера',
+    str_contains($phpLogText, 'shef.problems: запись логгера broken не прошла: UnexpectedValueException'),
+    true
 );
 Check::same('имя — у записи: withName() не врёт', str_contains($phpLogText, 'запись логгера renamed не прошла'), true);
 Check::same('файл не открылся — тоже в лог PHP', str_contains($phpLogText, 'запись логгера unopened не прошла'), true);
@@ -151,35 +164,32 @@ Check::group('enum Logger и сервисы из .settings.php');
 
 \Bitrix\Main\Config\Configuration::$settings = require $root.'/.settings.php';
 
-$names = static fn(array $cases): array => array_map(static fn(LoggerEnum $case): string => $case->name, $cases);
+$names = static fn (array $cases): array => array_map(static fn (LoggerEnum $case): string => $case->name, $cases);
 
 Check::same('пишут в файл', $names(LoggerEnum::getEnumUsedInterface(Constants::HandlerTypeFile)), ['Log1', 'Log', 'Problems', 'Deprecations']);
 Check::same('выводят на экран', $names(LoggerEnum::getEnumUsedInterface(Constants::HandlerTypePrint)), ['Pr', 'PrHtml']);
 Check::same('пишут в журнал событий', $names(LoggerEnum::getEnumUsedInterface(Constants::HandlerTypeBitrixEventLog)), ['Problems']);
-Check::throws('незнакомый тип обработчика', InvalidArgumentException::class, fn() => LoggerEnum::getEnumUsedInterface('telegram'));
-Check::throws('Problems — фабрика, а не логгер', LogicException::class, fn() => LoggerEnum::Problems->getLogger());
+Check::throws('незнакомый тип обработчика', InvalidArgumentException::class, fn () => LoggerEnum::getEnumUsedInterface('telegram'));
+Check::throws('Problems — фабрика, а не логгер', LogicException::class, fn () => LoggerEnum::Problems->getLogger());
 
 Check::group('отладочный лог и файлы проблем — с потолком размера');
 
 // Решение владельца: debug-лог рос без предела и забивал диск. Замена на
 // голый StreamHandler прошла бы незамеченной — тест держит класс и потолок.
-$capped = static function(array $handlers): ?int
-{
-	foreach($handlers as $handler)
-	{
-		if($handler instanceof Shef\Problems\Integration\Monolog\Handler\CappedStreamHandler)
-		{
-			return $handler->maxBytes;
-		}
-	}
+$capped = static function (array $handlers): ?int {
+    foreach ($handlers as $handler) {
+        if ($handler instanceof Shef\Problems\Integration\Monolog\Handler\CappedStreamHandler) {
+            return $handler->maxBytes;
+        }
+    }
 
-	return null;
+    return null;
 };
 Check::same('сервис Log — CappedStreamHandler на 20 МБ', $capped(LoggerEnum::Log->getLogger()->getHandlers()), 20 * 1024 * 1024);
 Check::same(
-	'фабрика проблем — CappedStreamHandler на 20 МБ',
-	$capped(Shef\Problems\Factory\SystemLoggerFactory::build(Level::Debug)->getHandlers()),
-	20 * 1024 * 1024
+    'фабрика проблем — CappedStreamHandler на 20 МБ',
+    $capped(Shef\Problems\Factory\SystemLoggerFactory::build(Level::Debug)->getHandlers()),
+    20 * 1024 * 1024
 );
 
 Check::finish();

@@ -1,4 +1,5 @@
 <?php
+
 $MESS['shef.problems_MODULE_NAME'] = '[SH] Учёт проблем';
 $MESS['shef.problems_MODULE_DESC'] = 'Логирование на Monolog: файлы логов, журнал событий, вывод отладки и учёт проблем в Битрикс24 | БУС.';
 $MESS['shef.problems_PARTNER_NAME'] = 'ИП Шевчик И.С.';

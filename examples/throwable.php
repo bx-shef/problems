@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 /**
  * Исключение -> ошибка ядра: Throwable\Manager::buildError().
@@ -37,27 +39,23 @@ use Bitrix\Main\Application;
 use Bitrix\Main\Result;
 use Shef\Problems\Throwable\Manager;
 
-$fail = static function(): never
-{
-	throw new DomainException('Сумма заказа отрицательная');
+$fail = static function (): never {
+    throw new DomainException('Сумма заказа отрицательная');
 };
 
 step('Без трассировки');
 
 $result = new Result();
 
-try
-{
-	$fail();
-}
-catch(\Throwable $throwable)
-{
-	$result->addError(Manager::buildError(
-		throwable: $throwable,
-		isUseTrace: false,
-		code: 'NEGATIVE_SUM',
-		customData: ['orderId' => 15]
-	));
+try {
+    $fail();
+} catch (\Throwable $throwable) {
+    $result->addError(Manager::buildError(
+        throwable: $throwable,
+        isUseTrace: false,
+        code: 'NEGATIVE_SUM',
+        customData: ['orderId' => 15]
+    ));
 }
 
 $error = $result->getErrors()[0];
@@ -73,22 +71,19 @@ check('customData', $error->getCustomData(), ['orderId' => 15]);
 
 step('С трассировкой');
 
-try
-{
-	$fail();
-}
-catch(\Throwable $throwable)
-{
-	$error = Manager::buildError($throwable);
+try {
+    $fail();
+} catch (\Throwable $throwable) {
+    $error = Manager::buildError($throwable);
 }
 
 check('трассировка на месте', str_contains($error->getMessage(), 'Trace: #0'), true);
 
 $documentRoot = Application::getDocumentRoot();
 check(
-	'корня сайта в трассировке нет',
-	'' === $documentRoot || !str_contains(mb_substr($error->getMessage(), mb_strpos($error->getMessage(), 'Trace:')), $documentRoot.'/'),
-	true
+    'корня сайта в трассировке нет',
+    '' === $documentRoot || !str_contains(mb_substr($error->getMessage(), mb_strpos($error->getMessage(), 'Trace:')), $documentRoot.'/'),
+    true
 );
 note('Файл в строке «File:» остаётся полным: так его выдаёт само исключение.');
 

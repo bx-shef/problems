@@ -18,28 +18,24 @@
 require_once __DIR__.'/bitrix.php';
 require_once __DIR__.'/psr.php';
 
-spl_autoload_register(static function(string $class): void
-{
-	$root = dirname(__DIR__, 2);
+spl_autoload_register(static function (string $class): void {
+    $root = dirname(__DIR__, 2);
 
-	$map = [
-		'Shef\\Problems\\' => static fn(string $rest): string => $root.'/lib/'.mb_strtolower(str_replace('\\', '/', $rest)).'.php',
-		'Monolog\\' => static fn(string $rest): string => $root.'/vendor/monolog/monolog/src/Monolog/'.str_replace('\\', '/', $rest).'.php',
-	];
+    $map = [
+        'Shef\\Problems\\' => static fn (string $rest): string => $root.'/lib/'.mb_strtolower(str_replace('\\', '/', $rest)).'.php',
+        'Monolog\\' => static fn (string $rest): string => $root.'/vendor/monolog/monolog/src/Monolog/'.str_replace('\\', '/', $rest).'.php',
+    ];
 
-	foreach($map as $prefix => $toPath)
-	{
-		if(!str_starts_with($class, $prefix))
-		{
-			continue;
-		}
+    foreach ($map as $prefix => $toPath) {
+        if (!str_starts_with($class, $prefix)) {
+            continue;
+        }
 
-		$path = $toPath(substr($class, strlen($prefix)));
-		if(is_file($path))
-		{
-			require_once $path;
-		}
+        $path = $toPath(substr($class, strlen($prefix)));
+        if (is_file($path)) {
+            require_once $path;
+        }
 
-		return;
-	}
+        return;
+    }
 });

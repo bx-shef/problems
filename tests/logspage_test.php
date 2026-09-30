@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 /**
  * Страница логов admin/logs.php: права, путь, экранирование — сама страница,
@@ -24,52 +26,56 @@ use Bitrix\Main\Context;
 use Bitrix\Main\Localization\Loc;
 
 // region Заглушки административной части ////
-final class AuthFormShown extends RuntimeException {}
+final class AuthFormShown extends RuntimeException
+{
+}
 
 class CUser
 {
-	public function __construct(private readonly bool $isAdmin) {}
+    public function __construct(private readonly bool $isAdmin)
+    {
+    }
 
-	public function IsAdmin(): bool
-	{
-		return $this->isAdmin;
-	}
+    public function IsAdmin(): bool
+    {
+        return $this->isAdmin;
+    }
 }
 
 class CMain
 {
-	public ?string $title = null;
+    public ?string $title = null;
 
-	public function SetTitle(?string $title): void
-	{
-		$this->title = $title;
-	}
+    public function SetTitle(?string $title): void
+    {
+        $this->title = $title;
+    }
 
-	public function AuthForm(?string $message): never
-	{
-		throw new AuthFormShown((string)$message);
-	}
+    public function AuthForm(?string $message): never
+    {
+        throw new AuthFormShown((string)$message);
+    }
 }
 
 class CAdminMessage
 {
-	public static function ShowMessage(?string $message): void
-	{
-		echo '[message]', $message, '[/message]';
-	}
+    public static function ShowMessage(?string $message): void
+    {
+        echo '[message]', $message, '[/message]';
+    }
 
-	public static function ShowNote(?string $message): void
-	{
-		echo '[note]', $message, '[/note]';
-	}
+    public static function ShowNote(?string $message): void
+    {
+        echo '[note]', $message, '[/note]';
+    }
 }
 
 class CFile
 {
-	public static function FormatSize(int|float $size): string
-	{
-		return $size.' B';
-	}
+    public static function FormatSize(int|float $size): string
+    {
+        return $size.' B';
+    }
 }
 // endregion ////
 
@@ -77,12 +83,11 @@ class CFile
 $portal = sys_get_temp_dir().'/shef-problems-logspage-'.getmypid();
 $www = $portal.'/www';
 // Уборка — и при фатальной ошибке страницы, а не только в конце скрипта.
-register_shutdown_function(static fn() => exec('rm -rf '.escapeshellarg($portal)));
+register_shutdown_function(static fn () => exec('rm -rf '.escapeshellarg($portal)));
 mkdir($www.'/bitrix/modules/main/include', 0777, true);
 mkdir($portal.'/sh_log');
-foreach(['prolog_admin_before', 'prolog_admin_after', 'epilog_admin'] as $part)
-{
-	file_put_contents($www.'/bitrix/modules/main/include/'.$part.'.php', '<?php');
+foreach (['prolog_admin_before', 'prolog_admin_after', 'epilog_admin'] as $part) {
+    file_put_contents($www.'/bitrix/modules/main/include/'.$part.'.php', '<?php');
 }
 file_put_contents($www.'/bitrix/.settings.php', 'СЕКРЕТ ПОРТАЛА');
 file_put_contents($portal.'/sh_log/sync.log', "до\n<script>alert(1)</script>\nпосле\n");
@@ -97,25 +102,21 @@ Loc::loadLangFile($root.'/lang/ru/admin/logs.php');
  *
  * @return array{title: ?string, out: string, auth: bool}
  */
-$open = static function(array $query, bool $isAdmin = true) use ($root): array
-{
-	Context::$query = $query;
-	$GLOBALS['USER'] = new CUser($isAdmin);
-	$GLOBALS['APPLICATION'] = new CMain();
+$open = static function (array $query, bool $isAdmin = true) use ($root): array {
+    Context::$query = $query;
+    $GLOBALS['USER'] = new CUser($isAdmin);
+    $GLOBALS['APPLICATION'] = new CMain();
 
-	$auth = false;
-	ob_start();
-	try
-	{
-		include $root.'/admin/logs.php';
-	}
-	catch(AuthFormShown)
-	{
-		$auth = true;
-	}
-	$out = (string)ob_get_clean();
+    $auth = false;
+    ob_start();
+    try {
+        include $root.'/admin/logs.php';
+    } catch (AuthFormShown) {
+        $auth = true;
+    }
+    $out = (string)ob_get_clean();
 
-	return ['title' => $GLOBALS['APPLICATION']->title, 'out' => $out, 'auth' => $auth];
+    return ['title' => $GLOBALS['APPLICATION']->title, 'out' => $out, 'auth' => $auth];
 };
 
 Check::group('права');
@@ -155,9 +156,9 @@ Check::group('языковой файл');
 
 preg_match_all("/Loc::getMessage\\('([A-Z0-9_]+)'/", (string)file_get_contents($root.'/admin/logs.php'), $codes);
 Check::same(
-	'каждый код страницы переведён',
-	array_values(array_diff(array_unique($codes[1]), array_keys(Loc::$messages))),
-	[]
+    'каждый код страницы переведён',
+    array_values(array_diff(array_unique($codes[1]), array_keys(Loc::$messages))),
+    []
 );
 
 // region Уборка ////

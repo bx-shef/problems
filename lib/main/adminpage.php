@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Shef\Problems\Main;
 
@@ -26,107 +28,99 @@ namespace Shef\Problems\Main;
  */
 class AdminPage
 {
-	public const FILE = 'shef_problems_logs.php';
-	public const MODULE_PAGE = '/admin/logs.php';
+    public const FILE = 'shef_problems_logs.php';
+    public const MODULE_PAGE = '/admin/logs.php';
 
-	/**
-	 * Своя заглушка: require на .../shef.problems/admin/logs.php — от корня
-	 * сайта или абсолютным путём. Так выглядит любая версия, которую писал
-	 * модуль, включая прежнюю с зашитым /bitrix/modules.
-	 */
-	private const OWN_PATTERN = '#^<\?php require\((?:\$_SERVER\[\'DOCUMENT_ROOT\'\]\.)?\'[^\']*/shef\.problems/admin/logs\.php\'\);\s*$#';
+    /**
+     * Своя заглушка: require на .../shef.problems/admin/logs.php — от корня
+     * сайта или абсолютным путём. Так выглядит любая версия, которую писал
+     * модуль, включая прежнюю с зашитым /bitrix/modules.
+     */
+    private const OWN_PATTERN = '#^<\?php require\((?:\$_SERVER\[\'DOCUMENT_ROOT\'\]\.)?\'[^\']*/shef\.problems/admin/logs\.php\'\);\s*$#';
 
-	public static function getTarget(string $documentRoot): string
-	{
-		return rtrim($documentRoot, '/').'/bitrix/admin/'.static::FILE;
-	}
+    public static function getTarget(string $documentRoot): string
+    {
+        return rtrim($documentRoot, '/').'/bitrix/admin/'.static::FILE;
+    }
 
-	/**
-	 * Содержимое заглушки для модуля, лежащего в $moduleDir.
-	 */
-	public static function getContent(string $documentRoot, string $moduleDir): string
-	{
-		$documentRoot = rtrim(str_replace('\\', '/', $documentRoot), '/');
-		$page = rtrim(str_replace('\\', '/', $moduleDir), '/').static::MODULE_PAGE;
+    /**
+     * Содержимое заглушки для модуля, лежащего в $moduleDir.
+     */
+    public static function getContent(string $documentRoot, string $moduleDir): string
+    {
+        $documentRoot = rtrim(str_replace('\\', '/', $documentRoot), '/');
+        $page = rtrim(str_replace('\\', '/', $moduleDir), '/').static::MODULE_PAGE;
 
-		if($documentRoot !== '' && str_starts_with($page, $documentRoot.'/'))
-		{
-			return sprintf(
-				"<?php require(\$_SERVER['DOCUMENT_ROOT'].'%s');\n",
-				substr($page, strlen($documentRoot))
-			);
-		}
+        if ($documentRoot !== '' && str_starts_with($page, $documentRoot.'/')) {
+            return sprintf(
+                "<?php require(\$_SERVER['DOCUMENT_ROOT'].'%s');\n",
+                substr($page, strlen($documentRoot))
+            );
+        }
 
-		return sprintf("<?php require('%s');\n", $page);
-	}
+        return sprintf("<?php require('%s');\n", $page);
+    }
 
-	/**
-	 * Своя заглушка: та, что модуль написал бы сейчас из $moduleDir, либо
-	 * любая прежняя его версия — require на .../shef.problems/admin/logs.php.
-	 */
-	public static function isOwn(string $content, string $documentRoot = '', string $moduleDir = ''): bool
-	{
-		if($moduleDir !== '' && $content === static::getContent($documentRoot, $moduleDir))
-		{
-			return true;
-		}
+    /**
+     * Своя заглушка: та, что модуль написал бы сейчас из $moduleDir, либо
+     * любая прежняя его версия — require на .../shef.problems/admin/logs.php.
+     */
+    public static function isOwn(string $content, string $documentRoot = '', string $moduleDir = ''): bool
+    {
+        if ($moduleDir !== '' && $content === static::getContent($documentRoot, $moduleDir)) {
+            return true;
+        }
 
-		return 1 === preg_match(static::OWN_PATTERN, $content);
-	}
+        return 1 === preg_match(static::OWN_PATTERN, $content);
+    }
 
-	/**
-	 * Положить заглушку. Нет файла — пишет. Своя, но с другим путём (модуль
-	 * переехали, прежняя версия с зашитым путём) — переписывает. Чужая —
-	 * не трогает.
-	 *
-	 * @return bool заглушка на месте и ведёт в этот модуль
-	 */
-	public static function install(string $documentRoot, string $moduleDir): bool
-	{
-		$target = static::getTarget($documentRoot);
-		$content = static::getContent($documentRoot, $moduleDir);
+    /**
+     * Положить заглушку. Нет файла — пишет. Своя, но с другим путём (модуль
+     * переехали, прежняя версия с зашитым путём) — переписывает. Чужая —
+     * не трогает.
+     *
+     * @return bool заглушка на месте и ведёт в этот модуль
+     */
+    public static function install(string $documentRoot, string $moduleDir): bool
+    {
+        $target = static::getTarget($documentRoot);
+        $content = static::getContent($documentRoot, $moduleDir);
 
-		if(is_file($target))
-		{
-			$current = (string)file_get_contents($target);
-			if($current === $content)
-			{
-				return true;
-			}
+        if (is_file($target)) {
+            $current = (string)file_get_contents($target);
+            if ($current === $content) {
+                return true;
+            }
 
-			if(!static::isOwn($current, $documentRoot, $moduleDir))
-			{
-				return false;
-			}
-		}
+            if (!static::isOwn($current, $documentRoot, $moduleDir)) {
+                return false;
+            }
+        }
 
-		if(!is_dir(dirname($target)) || !is_writable(dirname($target)))
-		{
-			return false;
-		}
+        if (!is_dir(dirname($target)) || !is_writable(dirname($target))) {
+            return false;
+        }
 
-		return false !== file_put_contents($target, $content);
-	}
+        return false !== file_put_contents($target, $content);
+    }
 
-	/**
-	 * Убрать заглушку — только свою.
-	 *
-	 * @return bool своей заглушки больше нет
-	 */
-	public static function uninstall(string $documentRoot, string $moduleDir): bool
-	{
-		$target = static::getTarget($documentRoot);
+    /**
+     * Убрать заглушку — только свою.
+     *
+     * @return bool своей заглушки больше нет
+     */
+    public static function uninstall(string $documentRoot, string $moduleDir): bool
+    {
+        $target = static::getTarget($documentRoot);
 
-		if(!is_file($target))
-		{
-			return true;
-		}
+        if (!is_file($target)) {
+            return true;
+        }
 
-		if(!static::isOwn((string)file_get_contents($target), $documentRoot, $moduleDir))
-		{
-			return false;
-		}
+        if (!static::isOwn((string)file_get_contents($target), $documentRoot, $moduleDir)) {
+            return false;
+        }
 
-		return unlink($target);
-	}
+        return unlink($target);
+    }
 }

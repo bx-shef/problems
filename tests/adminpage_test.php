@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 /**
  * Заглушка страницы логов в /bitrix/admin: путь — куда модуль стоит на самом
@@ -27,29 +29,29 @@ $www = $portal.'/www';
 mkdir($www.'/bitrix/admin', 0777, true);
 $target = AdminPage::getTarget($www);
 
-$require = static fn(string $path): string => "<?php require(\$_SERVER['DOCUMENT_ROOT'].'".$path."');\n";
+$require = static fn (string $path): string => "<?php require(\$_SERVER['DOCUMENT_ROOT'].'".$path."');\n";
 
 Check::group('путь — туда, где стоит модуль');
 
 Check::same(
-	'/bitrix/modules',
-	AdminPage::getContent($www, $www.'/bitrix/modules/shef.problems'),
-	$require('/bitrix/modules/shef.problems/admin/logs.php')
+    '/bitrix/modules',
+    AdminPage::getContent($www, $www.'/bitrix/modules/shef.problems'),
+    $require('/bitrix/modules/shef.problems/admin/logs.php')
 );
 Check::same(
-	'/local/modules',
-	AdminPage::getContent($www, $www.'/local/modules/shef.problems'),
-	$require('/local/modules/shef.problems/admin/logs.php')
+    '/local/modules',
+    AdminPage::getContent($www, $www.'/local/modules/shef.problems'),
+    $require('/local/modules/shef.problems/admin/logs.php')
 );
 Check::same(
-	'вне корня сайта — абсолютный путь',
-	AdminPage::getContent($www, '/opt/modules/shef.problems'),
-	"<?php require('/opt/modules/shef.problems/admin/logs.php');\n"
+    'вне корня сайта — абсолютный путь',
+    AdminPage::getContent($www, '/opt/modules/shef.problems'),
+    "<?php require('/opt/modules/shef.problems/admin/logs.php');\n"
 );
 Check::same(
-	'сосед корня сайта с тем же началом имени — тоже вне корня',
-	AdminPage::getContent($www, $www.'-old/bitrix/modules/shef.problems'),
-	"<?php require('".$www."-old/bitrix/modules/shef.problems/admin/logs.php');\n"
+    'сосед корня сайта с тем же началом имени — тоже вне корня',
+    AdminPage::getContent($www, $www.'-old/bitrix/modules/shef.problems'),
+    "<?php require('".$www."-old/bitrix/modules/shef.problems/admin/logs.php');\n"
 );
 
 // Заглушка должна быть рабочим PHP, а не только похожей на него строкой.

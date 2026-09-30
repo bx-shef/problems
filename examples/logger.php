@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 /**
  * Логгер, которому можно отдать не только строку.
@@ -49,23 +51,19 @@ $memory = new TestHandler(Level::Debug);
 $logger = (new Logger('example'))->pushHandler($memory);
 
 /** Последняя запись: [сообщение, контекст]. */
-$last = static function() use ($memory): array
-{
-	$records = $memory->getRecords();
-	$record = end($records);
+$last = static function () use ($memory): array {
+    $records = $memory->getRecords();
+    $record = end($records);
 
-	return [$record->message, $record->context];
+    return [$record->message, $record->context];
 };
 
 step('Исключение');
 
-try
-{
-	throw new RuntimeException('Не удалось прочитать файл обмена');
-}
-catch(RuntimeException $exception)
-{
-	$logger->error($exception, ['file' => 'import.xml']);
+try {
+    throw new RuntimeException('Не удалось прочитать файл обмена');
+} catch (RuntimeException $exception) {
+    $logger->error($exception, ['file' => 'import.xml']);
 }
 
 [$message, $context] = $last();
@@ -102,13 +100,10 @@ check('сообщение и контекст', $last(), ['Array', ['_message' =
 step('То, что превратить нельзя');
 
 $thrown = null;
-try
-{
-	$logger->info(42);
-}
-catch(InvalidArgumentException $exception)
-{
-	$thrown = $exception::class;
+try {
+    $logger->info(42);
+} catch (InvalidArgumentException $exception) {
+    $thrown = $exception::class;
 }
 
 check('число — InvalidArgumentException', $thrown, InvalidArgumentException::class);

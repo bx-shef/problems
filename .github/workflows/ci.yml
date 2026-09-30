@@ -1,5 +1,7 @@
 # Проверки репозитория. Всё, что здесь гоняется, гоняется через ./build.sh —
-# чтобы локальный прогон и прогон в CI не могли разойтись.
+# чтобы локальный прогон и прогон в CI не могли разойтись. Исключение одно —
+# линтер (задача Lint, composer run lint): ему нужен composer install, а
+# сборка обязана отрабатывать в свежем клоне без него.
 #
 # В защите ветки требуется ровно ОДНА проверка — CI. Остальные задачи её
 # зависимости, поэтому новая задача не потребует правки ruleset.
@@ -65,9 +67,10 @@ jobs:
           tools: composer
 
       # Пакет ставят через Composer, и сломанный composer.json виден только
-      # у того, кто ставит. --strict: предупреждение тоже провал.
+      # у того, кто ставит. --strict: предупреждение тоже провал. lock под
+      # git (ради линтера) — значит, и его свежесть проверяется.
       - name: composer validate
-        run: composer validate --strict --no-check-lock
+        run: composer validate --strict
 
   skills:
     name: Skills
@@ -113,9 +116,36 @@ jobs:
           # Пустой артефакт означал бы, что сборка молча ничего не собрала.
           if-no-files-found: error
 
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Забрать репозиторий
+        uses: actions/checkout@v4
+
+      - name: Поставить PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          # Одна версия, а не матрица: php-cs-fixer форматирует одинаково на
+          # любой из поддерживаемых. Нижняя граница — под неё собран lock
+          # (config.platform.php в composer.json).
+          php-version: '8.2'
+          extensions: mbstring
+          coverage: none
+          tools: composer
+
+      # Линтер живёт в require-dev, а не в build.sh: сборка обязана
+      # отрабатывать в свежем клоне без composer install. Ставится в
+      # vendor-dev/ — vendor/ здесь своя копия Monolog под git.
+      - name: Поставить инструменты разработчика
+        run: composer install --no-interaction --no-progress
+
+      - name: Форматирование
+        run: composer run lint
+
   ci:
     name: CI
-    needs: [checks, composer, skills, build]
+    needs: [checks, composer, skills, build, lint]
     runs-on: ubuntu-latest
     # ⚠ Обязательно вместе с проверкой результатов ниже. Без always() задача
     # была бы ПРОПУЩЕНА при падении зависимости, а пропущенную проверку защита
@@ -131,7 +161,8 @@ jobs:
           if [ "${{ needs.checks.result }}" != 'success' ] \
           || [ "${{ needs.composer.result }}" != 'success' ] \
           || [ "${{ needs.skills.result }}" != 'success' ] \
-          || [ "${{ needs.build.result }}" != 'success' ]
+          || [ "${{ needs.build.result }}" != 'success' ] \
+          || [ "${{ needs.lint.result }}" != 'success' ]
           then
             echo '::error::Не прошла одна из зависимостей'
             exit 1
