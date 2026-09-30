@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 /**
  * Страница логов отдаёт только файлы каталога логов.
@@ -45,26 +47,26 @@ $files = new LogFiles($dir);
 Check::group('имена');
 
 $accepted = array_values(array_filter(
-	['log.log', 'sh_problems_sync.log', 'sh_problems_sync.log.1', 'log1-custom.log'],
-	static fn(string $name): bool => LogFiles::isValidName($name)
+    ['log.log', 'sh_problems_sync.log', 'sh_problems_sync.log.1', 'log1-custom.log'],
+    static fn (string $name): bool => LogFiles::isValidName($name)
 ));
 Check::same('обычные имена и ротированные проходят', count($accepted), 4);
 
 $rejected = array_values(array_filter(
-	[
-		'../www/bitrix/.settings.php',
-		'../sh_log-old/old.log',
-		'/etc/passwd',
-		'sub/log.log',
-		'log.log/../../x.log',
-		'.log',
-		'log.log.2.gz',
-		'notes.txt',
-		"log.log\0.php",
-		"log.log\n",
-		'',
-	],
-	static fn(string $name): bool => LogFiles::isValidName($name)
+    [
+        '../www/bitrix/.settings.php',
+        '../sh_log-old/old.log',
+        '/etc/passwd',
+        'sub/log.log',
+        'log.log/../../x.log',
+        '.log',
+        'log.log.2.gz',
+        'notes.txt',
+        "log.log\0.php",
+        "log.log\n",
+        '',
+    ],
+    static fn (string $name): bool => LogFiles::isValidName($name)
 ));
 Check::same('всё остальное — нет', $rejected, []);
 
@@ -90,9 +92,9 @@ unlink($sandbox.'/sh_log-link');
 Check::group('список');
 
 Check::same(
-	'только настоящие логи внутри каталога, по имени',
-	array_column($files->getList(), 'name'),
-	['log.log', 'sh_problems_sync.log.1']
+    'только настоящие логи внутри каталога, по имени',
+    array_column($files->getList(), 'name'),
+    ['log.log', 'sh_problems_sync.log.1']
 );
 Check::same('размер', $files->getList()[0]['size'], strlen("строка 1\nстрока 2\n"));
 Check::same('каталога нет — пустой список', (new LogFiles($sandbox.'/нет'))->getList(), []);
@@ -104,9 +106,8 @@ Check::same('маленький файл — целиком', [$small['content']
 
 $big = $dir.'/big.log';
 $lines = [];
-for($i = 1; $i <= 1000; $i++)
-{
-	$lines[] = sprintf('строка %04d', $i);
+for ($i = 1; $i <= 1000; $i++) {
+    $lines[] = sprintf('строка %04d', $i);
 }
 file_put_contents($big, implode("\n", $lines)."\n");
 

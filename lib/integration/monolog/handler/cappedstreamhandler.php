@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Shef\Problems\Integration\Monolog\Handler;
 
@@ -23,67 +25,60 @@ use Monolog\Utils;
  * StreamHandler с Monolog 3.10 переоткрывает файл, когда у пути сменился
  * inode.
  */
-class CappedStreamHandler
-	extends StreamHandler
+class CappedStreamHandler extends StreamHandler
 {
-	/** Потолок по умолчанию — 20 МБ. */
-	public const DEFAULT_MAX_BYTES = 20 * 1024 * 1024;
+    /** Потолок по умолчанию — 20 МБ. */
+    public const DEFAULT_MAX_BYTES = 20 * 1024 * 1024;
 
-	protected string $filename;
+    protected string $filename;
 
-	public function __construct(
-		string $filename,
-		int|string|Level $level = Level::Debug,
-		public readonly int $maxBytes = self::DEFAULT_MAX_BYTES,
-		bool $bubble = true,
-		?int $filePermission = null,
-		bool $useLocking = false
-	)
-	{
-		$this->filename = Utils::canonicalizePath($filename);
-		parent::__construct($this->filename, $level, $bubble, $filePermission, $useLocking);
-	}
+    public function __construct(
+        string $filename,
+        int|string|Level $level = Level::Debug,
+        public readonly int $maxBytes = self::DEFAULT_MAX_BYTES,
+        bool $bubble = true,
+        ?int $filePermission = null,
+        bool $useLocking = false
+    ) {
+        $this->filename = Utils::canonicalizePath($filename);
+        parent::__construct($this->filename, $level, $bubble, $filePermission, $useLocking);
+    }
 
-	/**
-	 * @inheritDoc
-	 */
-	protected function write(LogRecord $record): void
-	{
-		if($this->isOverLimit())
-		{
-			$this->close();
-			$this->rotate();
-		}
+    /**
+     * @inheritDoc
+     */
+    protected function write(LogRecord $record): void
+    {
+        if ($this->isOverLimit()) {
+            $this->close();
+            $this->rotate();
+        }
 
-		parent::write($record);
-	}
+        parent::write($record);
+    }
 
-	protected function isOverLimit(): bool
-	{
-		if($this->maxBytes <= 0)
-		{
-			return false;
-		}
+    protected function isOverLimit(): bool
+    {
+        if ($this->maxBytes <= 0) {
+            return false;
+        }
 
-		clearstatcache(true, $this->filename);
+        clearstatcache(true, $this->filename);
 
-		return is_file($this->filename) && (int)filesize($this->filename) >= $this->maxBytes;
-	}
+        return is_file($this->filename) && (int)filesize($this->filename) >= $this->maxBytes;
+    }
 
-	/**
-	 * <имя> -> <имя>.1. Два процесса могут переименовывать одновременно:
-	 * проигравший получит warning от rename() — его глушим, файл уже отложен.
-	 */
-	protected function rotate(): void
-	{
-		set_error_handler(static fn(): bool => true);
-		try
-		{
-			rename($this->filename, $this->filename.'.1');
-		}
-		finally
-		{
-			restore_error_handler();
-		}
-	}
+    /**
+     * <имя> -> <имя>.1. Два процесса могут переименовывать одновременно:
+     * проигравший получит warning от rename() — его глушим, файл уже отложен.
+     */
+    protected function rotate(): void
+    {
+        set_error_handler(static fn (): bool => true);
+        try {
+            rename($this->filename, $this->filename.'.1');
+        } finally {
+            restore_error_handler();
+        }
+    }
 }

@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 /**
  * Страница настроек: options_conf.php собирается против API shef.options 3.x.
@@ -39,13 +41,12 @@ Check::group('options_conf.php собирается');
 $tabs = require $root.'/options_conf.php';
 
 Check::same('вернул список вкладок', is_array($tabs), true);
-Check::same('вкладка «Сотрудники»', array_map(static fn(Options\Tab $tab): string => $tab->getCode(), $tabs), ['DEF']);
+Check::same('вкладка «Сотрудники»', array_map(static fn (Options\Tab $tab): string => $tab->getCode(), $tabs), ['DEF']);
 Check::same('у вкладки есть название', $tabs[0]->getName(), 'Сотрудники');
 
 $options = [];
-foreach($tabs[0]->getOptionList() as $option)
-{
-	$options[$option->getCode()] = $option;
+foreach ($tabs[0]->getOptionList() as $option) {
+    $options[$option->getCode()] = $option;
 }
 
 Check::group('ссылка на логи');
@@ -53,9 +54,9 @@ Check::group('ссылка на логи');
 $logs = $options['Logs'] ?? null;
 Check::same('строка с логами есть', $logs instanceof Options\RowInfo, true);
 Check::same(
-	'ведёт на страницу логов',
-	str_contains((string)$logs?->getDescription(), '[URL='.AdminMenu::getUrlLogList('ru').']'),
-	true
+    'ведёт на страницу логов',
+    str_contains((string)$logs?->getDescription(), '[URL='.AdminMenu::getUrlLogList('ru').']'),
+    true
 );
 Check::same('показывает каталог логов', str_contains((string)$logs?->getDescription(), '/home/bitrix/sh_log'), true);
 
@@ -63,14 +64,14 @@ Check::group('роли');
 
 $roles = ['defuserid', 'adminid', 'dirid', 'syncuserid', 'productsuserid', 'saleuserid'];
 $missing = array_values(array_filter(
-	$roles,
-	static fn(string $code): bool => !(($options[$code] ?? null) instanceof Options\Users)
+    $roles,
+    static fn (string $code): bool => !(($options[$code] ?? null) instanceof Options\Users)
 ));
 Check::same('каждая роль — выбор пользователя', $missing, []);
 
 $untitled = array_values(array_filter(
-	$roles,
-	static fn(string $code): bool => ($options[$code] ?? null)?->getTitle() === ''
+    $roles,
+    static fn (string $code): bool => ($options[$code] ?? null)?->getTitle() === ''
 ));
 Check::same('у каждой роли есть подпись', $untitled, []);
 

@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Shef\Problems\Integration\Shef\UiClear;
 
@@ -25,12 +27,12 @@ use Shef\Problems\Main\Constants;
  */
 class Events
 {
-	public static function onBitrixMenuExtInitTopPanelUserMenu(Event $event): EventResult
-	{
-		return new EventResult(
-			EventResult::UNDEFINED,
-			null,
-			Constants::MODULE_ID
-		);
-	}
+    public static function onBitrixMenuExtInitTopPanelUserMenu(Event $event): EventResult
+    {
+        return new EventResult(
+            EventResult::UNDEFINED,
+            null,
+            Constants::MODULE_ID
+        );
+    }
 }

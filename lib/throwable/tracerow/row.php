@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Shef\Problems\Throwable\TraceRow;
 
@@ -14,23 +16,23 @@ use Bitrix\Main\Application;
  */
 class Row
 {
-	public readonly string $file;
-	public readonly ?int $line;
-	public readonly string $function;
-	public readonly string $class;
-	public readonly string $type;
+    public readonly string $file;
+    public readonly ?int $line;
+    public readonly string $function;
+    public readonly string $class;
+    public readonly string $type;
 
-	public function __construct(array $row)
-	{
-		$file = (string)($row['file'] ?? '');
-		$line = (int)($row['line'] ?? 0);
+    public function __construct(array $row)
+    {
+        $file = (string)($row['file'] ?? '');
+        $line = (int)($row['line'] ?? 0);
 
-		$this->file = $file !== ''
-			? str_replace(Application::getDocumentRoot(), '', $file)
-			: '[internal function]';
-		$this->line = $line > 0 ? $line : null;
-		$this->function = (string)($row['function'] ?? '');
-		$this->class = (string)($row['class'] ?? '');
-		$this->type = (string)($row['type'] ?? '');
-	}
+        $this->file = $file !== ''
+            ? str_replace(Application::getDocumentRoot(), '', $file)
+            : '[internal function]';
+        $this->line = $line > 0 ? $line : null;
+        $this->function = (string)($row['function'] ?? '');
+        $this->class = (string)($row['class'] ?? '');
+        $this->type = (string)($row['type'] ?? '');
+    }
 }

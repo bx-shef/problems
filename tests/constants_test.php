@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 /**
  * Кому уходит проблема: ID сотрудников из настроек модуля.
@@ -23,16 +25,14 @@ use Bitrix\Main\Config\Configuration;
 use Bitrix\Main\Config\Option;
 use Shef\Problems\Main\Constants;
 
-$with = static function(mixed $value): int
-{
-	Option::$values = [];
+$with = static function (mixed $value): int {
+    Option::$values = [];
 
-	if(null !== $value)
-	{
-		Option::set(Constants::MODULE_ID, 'DEF_adminid', $value);
-	}
+    if (null !== $value) {
+        Option::set(Constants::MODULE_ID, 'DEF_adminid', $value);
+    }
 
-	return Constants::getAdminId();
+    return Constants::getAdminId();
 };
 
 Check::group('корректные значения');
@@ -56,25 +56,23 @@ Check::group('все роли читаются одинаково');
 
 Option::$values = [];
 $roles = [
-	'DEF_defuserid' => 'getDefUserId',
-	'DEF_adminid' => 'getAdminId',
-	'DEF_dirid' => 'getDirectorId',
-	'DEF_syncuserid' => 'getSyncUserId',
-	'DEF_productsuserid' => 'getProductsUserId',
-	'DEF_saleuserid' => 'getSaleUserId',
+    'DEF_defuserid' => 'getDefUserId',
+    'DEF_adminid' => 'getAdminId',
+    'DEF_dirid' => 'getDirectorId',
+    'DEF_syncuserid' => 'getSyncUserId',
+    'DEF_productsuserid' => 'getProductsUserId',
+    'DEF_saleuserid' => 'getSaleUserId',
 ];
 
 $id = 100;
 $wrong = [];
-foreach($roles as $code => $method)
-{
-	$id++;
-	Option::set(Constants::MODULE_ID, $code, (string)$id);
+foreach ($roles as $code => $method) {
+    $id++;
+    Option::set(Constants::MODULE_ID, $code, (string)$id);
 
-	if(Constants::$method() !== $id)
-	{
-		$wrong[] = $method;
-	}
+    if (Constants::$method() !== $id) {
+        $wrong[] = $method;
+    }
 }
 
 Check::same('каждый метод читает свою настройку', $wrong, []);
@@ -85,12 +83,10 @@ $shef_problems_default_option = [];
 require $root.'/default_option.php';
 
 $mismatch = [];
-foreach(array_keys($roles) as $code)
-{
-	if(($shef_problems_default_option[$code] ?? null) !== (string)Constants::DEFAULT_USER_ID)
-	{
-		$mismatch[] = $code;
-	}
+foreach (array_keys($roles) as $code) {
+    if (($shef_problems_default_option[$code] ?? null) !== (string)Constants::DEFAULT_USER_ID) {
+        $mismatch[] = $code;
+    }
 }
 
 Check::same('default_option.php знает все роли и даёт DEFAULT_USER_ID', $mismatch, []);
@@ -112,9 +108,9 @@ Check::same('корень сайта в корне ФС — без двойно�
 
 Application::$documentRoot = '';
 Check::same(
-	'корня сайта нет (CLI) — временный каталог, а не /sh_log',
-	Constants::getLogDir(),
-	rtrim(sys_get_temp_dir(), '/').'/sh_log'
+    'корня сайта нет (CLI) — временный каталог, а не /sh_log',
+    Constants::getLogDir(),
+    rtrim(sys_get_temp_dir(), '/').'/sh_log'
 );
 
 Check::group('каталог логов из настроек проекта');
@@ -125,13 +121,11 @@ Configuration::$values[Constants::SETTINGS_KEY] = [Constants::SETTINGS_LOG_DIR =
 Check::same('абсолютный путь проекта', Constants::getLogDir(), '/var/log/portal');
 
 $ignored = [];
-foreach(['logs', '../sh_log', '', '/', 42, null] as $value)
-{
-	Configuration::$values[Constants::SETTINGS_KEY] = [Constants::SETTINGS_LOG_DIR => $value];
-	if(Constants::getLogDir() !== '/home/bitrix/sh_log')
-	{
-		$ignored[] = var_export($value, true);
-	}
+foreach (['logs', '../sh_log', '', '/', 42, null] as $value) {
+    Configuration::$values[Constants::SETTINGS_KEY] = [Constants::SETTINGS_LOG_DIR => $value];
+    if (Constants::getLogDir() !== '/home/bitrix/sh_log') {
+        $ignored[] = var_export($value, true);
+    }
 }
 Check::same('не абсолютный путь — по умолчанию', $ignored, []);
 

@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 /**
  * Меню «Учёт проблем» в административной части.
@@ -34,20 +36,21 @@ define('LANGUAGE_ID', 'ru');
 
 class CUser
 {
-	public function __construct(private readonly bool $isAdmin) {}
+    public function __construct(private readonly bool $isAdmin)
+    {
+    }
 
-	public function IsAdmin(): bool
-	{
-		return $this->isAdmin;
-	}
+    public function IsAdmin(): bool
+    {
+        return $this->isAdmin;
+    }
 }
 
 /** Подключить admin/menu.php так, как это делает ядро. */
-$includeMenu = static function(?CUser $user) use ($root): mixed
-{
-	$GLOBALS['USER'] = $user;
+$includeMenu = static function (?CUser $user) use ($root): mixed {
+    $GLOBALS['USER'] = $user;
 
-	return include $root.'/admin/menu.php';
+    return include $root.'/admin/menu.php';
 };
 // endregion ////
 
@@ -64,53 +67,50 @@ Check::group('логи — через страницу модуля');
 
 $menu = AdminMenu::build('ru');
 $urls = [];
-$walk = static function(array $items) use (&$walk, &$urls): void
-{
-	foreach($items as $item)
-	{
-		if(isset($item['url']))
-		{
-			$urls[] = $item['url'];
-		}
+$walk = static function (array $items) use (&$walk, &$urls): void {
+    foreach ($items as $item) {
+        if (isset($item['url'])) {
+            $urls[] = $item['url'];
+        }
 
-		$walk($item['items'] ?? []);
-	}
+        $walk($item['items'] ?? []);
+    }
 };
 $walk($menu['items']);
 
 $outside = array_values(array_filter(
-	$urls,
-	static fn(string $url): bool => str_contains($url, 'fileman') || str_contains($url, 'sh_log')
+    $urls,
+    static fn (string $url): bool => str_contains($url, 'fileman') || str_contains($url, 'sh_log')
 ));
 Check::same('ни файлового менеджера, ни путей к каталогу логов в ссылках', $outside, []);
 
 $logs = $menu['items'][0]['items'];
 $expectedFiles = array_merge(
-	['log1', 'log'],
-	array_map('mb_strtolower', Constants::getAuditTypeList()),
-	['deprecations', 'exceptions', 'mailer']
+    ['log1', 'log'],
+    array_map('mb_strtolower', Constants::getAuditTypeList()),
+    ['deprecations', 'exceptions', 'mailer']
 );
 $expectedUrls = array_map(
-	static fn(string $name): string => AdminMenu::getUrlLogFile($name.'.log', 'ru'),
-	$expectedFiles
+    static fn (string $name): string => AdminMenu::getUrlLogFile($name.'.log', 'ru'),
+    $expectedFiles
 );
 
 Check::same(
-	'каждый файловый логгер и каждый тип события — пункт меню',
-	array_slice(array_column($logs, 'url'), 0, count($expectedUrls)),
-	$expectedUrls
+    'каждый файловый логгер и каждый тип события — пункт меню',
+    array_slice(array_column($logs, 'url'), 0, count($expectedUrls)),
+    $expectedUrls
 );
 Check::same(
-	'адрес просмотра файла',
-	AdminMenu::getUrlLogFile('log.log', 'ru'),
-	'/bitrix/admin/shef_problems_logs.php?lang=ru&file=log.log'
+    'адрес просмотра файла',
+    AdminMenu::getUrlLogFile('log.log', 'ru'),
+    '/bitrix/admin/shef_problems_logs.php?lang=ru&file=log.log'
 );
 Check::same('последний пункт — все логи', end($logs)['url'], '/bitrix/admin/shef_problems_logs.php?lang=ru');
 
 // Имя из меню страница обязана принять: иначе пункт вёл бы в «файла нет».
 $rejected = array_values(array_filter(
-	$expectedFiles,
-	static fn(string $name): bool => !\Shef\Problems\Main\LogFiles::isValidName($name.'.log')
+    $expectedFiles,
+    static fn (string $name): bool => !\Shef\Problems\Main\LogFiles::isValidName($name.'.log')
 ));
 Check::same('страница логов принимает каждое имя из меню', $rejected, []);
 
@@ -125,9 +125,9 @@ $target = $portal.'/www'.AdminMenu::LOGS_PAGE;
 Check::same('страница в меню — та, что пишет AdminPage', AdminMenu::LOGS_PAGE, '/bitrix/admin/'.\Shef\Problems\Main\AdminPage::FILE);
 Check::same('страницы нет — пишет', AdminMenu::ensureLogsPage($portal.'/www', $root), true);
 Check::same(
-	'ведёт в этот модуль',
-	(string)file_get_contents($target),
-	\Shef\Problems\Main\AdminPage::getContent($portal.'/www', $root)
+    'ведёт в этот модуль',
+    (string)file_get_contents($target),
+    \Shef\Problems\Main\AdminPage::getContent($portal.'/www', $root)
 );
 
 file_put_contents($target, 'своя версия проекта');
@@ -146,9 +146,9 @@ Check::group('журнал событий');
 $eventLog = $menu['items'][1]['items'];
 Check::same('пункт на каждый тип события', count($eventLog), count(Constants::getAuditTypeList()));
 Check::same(
-	'фильтр по типу',
-	AdminMenu::getUrlEventLog(Constants::AuditTypeSale, 'ru'),
-	'/bitrix/admin/event_log.php?lang=ru&set_filter=Y&adm_filter_applied=0&find_type=audit_type_id&find_audit_type%5B0%5D=SH_PROBLEMS_SALE'
+    'фильтр по типу',
+    AdminMenu::getUrlEventLog(Constants::AuditTypeSale, 'ru'),
+    '/bitrix/admin/event_log.php?lang=ru&set_filter=Y&adm_filter_applied=0&find_type=audit_type_id&find_audit_type%5B0%5D=SH_PROBLEMS_SALE'
 );
 
 $withPerfmon = AdminMenu::build('ru', true)['items'][1]['items'];

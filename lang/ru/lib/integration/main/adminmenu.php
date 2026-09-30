@@ -1,4 +1,5 @@
 <?php
+
 $MESS['SH_PROBLEMS_MENU'] = 'Учёт проблем';
 $MESS['SH_PROBLEMS_MENU_TITLE'] = 'Логи и журнал событий модуля shef.problems';
 $MESS['SH_PROBLEMS_MENU_LOGS'] = 'Логи';

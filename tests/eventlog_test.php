@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 /**
  * Запись в журнал событий Битрикса (CEventLog).
@@ -34,28 +36,26 @@ mkdir($sandbox.'/www', 0777, true);
 Check::group('уровень Monolog -> SEVERITY журнала');
 
 $expected = [
-	'Debug' => 'DEBUG',
-	'Info' => 'INFO',
-	'Notice' => 'INFO',
-	'Warning' => 'WARNING',
-	'Error' => 'ERROR',
-	'Critical' => 'ERROR',
-	'Alert' => 'ERROR',
-	'Emergency' => 'ERROR',
+    'Debug' => 'DEBUG',
+    'Info' => 'INFO',
+    'Notice' => 'INFO',
+    'Warning' => 'WARNING',
+    'Error' => 'ERROR',
+    'Critical' => 'ERROR',
+    'Alert' => 'ERROR',
+    'Emergency' => 'ERROR',
 ];
 
 $allowed = ['SECURITY', 'ERROR', 'WARNING', 'INFO', 'DEBUG'];
 $outside = [];
 
-foreach(Level::cases() as $level)
-{
-	$severity = BitrixCEventLogEntity::mapSeverity($level);
-	Check::same($level->name, $severity, $expected[$level->name]);
+foreach (Level::cases() as $level) {
+    $severity = BitrixCEventLogEntity::mapSeverity($level);
+    Check::same($level->name, $severity, $expected[$level->name]);
 
-	if(!in_array($severity, $allowed, true))
-	{
-		$outside[] = $level->name;
-	}
+    if (!in_array($severity, $allowed, true)) {
+        $outside[] = $level->name;
+    }
 }
 
 Check::same('каждый уровень ложится в то, что журнал знает', $outside, []);
@@ -65,12 +65,12 @@ Check::group('обработчик: поля журнала');
 CEventLog::$records = [];
 
 $logger = (new Logger('problems'))
-	->pushHandler(new BitrixCEventLogHandler(auditType: Constants::AuditTypeSync));
+    ->pushHandler(new BitrixCEventLogHandler(auditType: Constants::AuditTypeSync));
 
 $logger->critical('Выгрузка остановилась', [
-	'itemId' => 42,
-	'moduleId' => 'acme.exchange',
-	'file' => 'orders.xml',
+    'itemId' => 42,
+    'moduleId' => 'acme.exchange',
+    'file' => 'orders.xml',
 ]);
 
 $record = CEventLog::$records[0] ?? [];
@@ -90,10 +90,10 @@ CEventLog::$records = [];
 \Bitrix\Main\Config\Option::set(Constants::MODULE_ID, 'DEF_defuserid', '17');
 
 $logger = SystemLoggerFactory::build(
-	logLevel: Level::Warning,
-	auditType: Constants::AuditTypeProduct,
-	moduleId: 'acme.catalog',
-	className: 'Acme\\Catalog\\Import',
+    logLevel: Level::Warning,
+    auditType: Constants::AuditTypeProduct,
+    moduleId: 'acme.catalog',
+    className: 'Acme\\Catalog\\Import',
 );
 
 $logger->info('ниже порога — никуда');
@@ -134,19 +134,16 @@ SystemLoggerFactory::build(logLevel: Level::Debug)->error('модуля нет �
 Check::same('модуля нет нигде — empty, как раньше', CEventLog::$records[0]['MODULE_ID'] ?? null, Constants::EmptyValue);
 
 // region Уборка ////
-$remove = static function(string $dir) use (&$remove): void
-{
-	foreach(scandir($dir) ?: [] as $entry)
-	{
-		if('.' === $entry || '..' === $entry)
-		{
-			continue;
-		}
+$remove = static function (string $dir) use (&$remove): void {
+    foreach (scandir($dir) ?: [] as $entry) {
+        if ('.' === $entry || '..' === $entry) {
+            continue;
+        }
 
-		is_dir($dir.'/'.$entry) ? $remove($dir.'/'.$entry) : unlink($dir.'/'.$entry);
-	}
+        is_dir($dir.'/'.$entry) ? $remove($dir.'/'.$entry) : unlink($dir.'/'.$entry);
+    }
 
-	rmdir($dir);
+    rmdir($dir);
 };
 $remove($sandbox);
 // endregion ////

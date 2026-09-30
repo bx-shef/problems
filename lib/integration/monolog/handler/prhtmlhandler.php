@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Shef\Problems\Integration\Monolog\Handler;
 
@@ -13,43 +15,42 @@ use Shef\Problems\Main\Constants;
  * Стили — расширение Constants::EXTENSION_PR_HTML, его раскладывает
  * установщик в /bitrix/js. Экранирование — в родителе.
  */
-class PrHtmlHandler
-	extends PrHandler
+class PrHtmlHandler extends PrHandler
 {
-	protected static function getSeparator(): string
-	{
-		return PHP_EOL.'<br>';
-	}
+    protected static function getSeparator(): string
+    {
+        return PHP_EOL.'<br>';
+    }
 
-	/**
-	 * @throws LoaderException
-	 */
-	protected function initCss(): void
-	{
-		Extension::load([
-			Constants::EXTENSION_PR_HTML,
-		]);
-	}
+    /**
+     * @throws LoaderException
+     */
+    protected function initCss(): void
+    {
+        Extension::load([
+            Constants::EXTENSION_PR_HTML,
+        ]);
+    }
 
-	/**
-	 * @throws LoaderException
-	 */
-	protected function makeWrite(LogRecord $record): string
-	{
-		$this->initCss();
+    /**
+     * @throws LoaderException
+     */
+    protected function makeWrite(LogRecord $record): string
+    {
+        $this->initCss();
 
-		return sprintf(
-			'<div class="shef-problems-container" data-level="%s">%s</div>',
-			static::escape($record->level->getName()),
-			parent::makeWrite($record)
-		);
-	}
+        return sprintf(
+            '<div class="shef-problems-container" data-level="%s">%s</div>',
+            static::escape($record->level->getName()),
+            parent::makeWrite($record)
+        );
+    }
 
-	protected function makeStackTraces(LogRecord $record): string
-	{
-		return sprintf(
-			'<div>%s</div>',
-			parent::makeStackTraces($record)
-		);
-	}
+    protected function makeStackTraces(LogRecord $record): string
+    {
+        return sprintf(
+            '<div>%s</div>',
+            parent::makeStackTraces($record)
+        );
+    }
 }

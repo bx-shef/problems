@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 /**
  * Учёт проблем в своём классе: трейт LoggerProblems.
@@ -52,49 +54,49 @@ use Shef\Problems\Main\Constants;
  */
 final class OrdersExchange
 {
-	use LoggerProblems;
+    use LoggerProblems;
 
-	public function __construct()
-	{
-		$this->initLogger();
-	}
+    public function __construct()
+    {
+        $this->initLogger();
+    }
 
-	public static function getClassName(): string
-	{
-		return static::class;
-	}
+    public static function getClassName(): string
+    {
+        return static::class;
+    }
 
-	public static function getModuleId(): string
-	{
-		return 'acme.exchange';
-	}
+    public static function getModuleId(): string
+    {
+        return 'acme.exchange';
+    }
 
-	/** Ниже Error — не проблема, а шум: не пишем. */
-	protected static function getLogLevel(): Level
-	{
-		return Level::Error;
-	}
+    /** Ниже Error — не проблема, а шум: не пишем. */
+    protected static function getLogLevel(): Level
+    {
+        return Level::Error;
+    }
 
-	/** Все проблемы этого класса — про синхронизацию. */
-	protected static function getAuditType(): string
-	{
-		return Constants::AuditTypeSync;
-	}
+    /** Все проблемы этого класса — про синхронизацию. */
+    protected static function getAuditType(): string
+    {
+        return Constants::AuditTypeSync;
+    }
 
-	/** Ответственный — тот, кто в настройках модуля отвечает за синхронизации. */
-	public static function getAssignedId(): int
-	{
-		return Constants::getSyncUserId();
-	}
+    /** Ответственный — тот, кто в настройках модуля отвечает за синхронизации. */
+    public static function getAssignedId(): int
+    {
+        return Constants::getSyncUserId();
+    }
 
-	public function run(): void
-	{
-		$this->logger->info('Началась выгрузка заказов');
-		$this->logger->critical('1С не ответила за 30 секунд', [
-			'itemId' => 1024,
-			'moduleId' => static::getModuleId(),
-		]);
-	}
+    public function run(): void
+    {
+        $this->logger->info('Началась выгрузка заказов');
+        $this->logger->critical('1С не ответила за 30 секунд', [
+            'itemId' => 1024,
+            'moduleId' => static::getModuleId(),
+        ]);
+    }
 }
 // endregion ////
 
@@ -102,10 +104,9 @@ step('Класс пишет проблемы');
 
 $isStub = 'заглушки' === $exampleMode;
 
-if($isStub)
-{
-	\Bitrix\Main\Config\Option::set(Constants::MODULE_ID, 'DEF_syncuserid', '15');
-	CEventLog::$records = [];
+if ($isStub) {
+    \Bitrix\Main\Config\Option::set(Constants::MODULE_ID, 'DEF_syncuserid', '15');
+    CEventLog::$records = [];
 }
 
 (new OrdersExchange())->run();
@@ -120,21 +121,18 @@ check('в файле — класс', str_contains($text, '"class":"OrdersExchan
 
 step('Журнал событий');
 
-if($isStub)
-{
-	$record = CEventLog::$records[0] ?? [];
+if ($isStub) {
+    $record = CEventLog::$records[0] ?? [];
 
-	check('в журнал ушла одна запись', count(CEventLog::$records), 1);
-	check('тип события', $record['AUDIT_TYPE_ID'] ?? null, Constants::AuditTypeSync);
-	check('модуль — из контекста', $record['MODULE_ID'] ?? null, 'acme.exchange');
-	check('ID элемента — из контекста', $record['ITEM_ID'] ?? null, 1024);
-	check('важность — та, что журнал знает', $record['SEVERITY'] ?? null, 'ERROR');
-	check('ответственный из настроек', str_contains($text, '"assigned":15'), true);
-}
-else
-{
-	note('Журнал: Настройки → Инструменты → Журнал событий, тип SH_PROBLEMS_SYNC.');
-	note('Или меню «Учёт проблем» → «Журнал событий» → «[Monolog] Sync».');
+    check('в журнал ушла одна запись', count(CEventLog::$records), 1);
+    check('тип события', $record['AUDIT_TYPE_ID'] ?? null, Constants::AuditTypeSync);
+    check('модуль — из контекста', $record['MODULE_ID'] ?? null, 'acme.exchange');
+    check('ID элемента — из контекста', $record['ITEM_ID'] ?? null, 1024);
+    check('важность — та, что журнал знает', $record['SEVERITY'] ?? null, 'ERROR');
+    check('ответственный из настроек', str_contains($text, '"assigned":15'), true);
+} else {
+    note('Журнал: Настройки → Инструменты → Журнал событий, тип SH_PROBLEMS_SYNC.');
+    note('Или меню «Учёт проблем» → «Журнал событий» → «[Monolog] Sync».');
 }
 
 done('problems');

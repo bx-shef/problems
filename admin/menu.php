@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 /**
  * Раздел модуля в меню административной части.
@@ -23,14 +25,12 @@ defined('B_PROLOG_INCLUDED') && B_PROLOG_INCLUDED === true || die();
 /** @var \CUser $USER */
 global $USER;
 
-if(!($USER instanceof \CUser) || !$USER->IsAdmin())
-{
-	return false;
+if (!($USER instanceof \CUser) || !$USER->IsAdmin()) {
+    return false;
 }
 
-if(!Loader::includeModule('shef.problems'))
-{
-	return false;
+if (!Loader::includeModule('shef.problems')) {
+    return false;
 }
 
 $context = Context::getCurrent();
@@ -39,11 +39,11 @@ $context = Context::getCurrent();
 // логов в /bitrix/admin у него нет. Не вышло положить — меню всё равно
 // строим: журнал событий и настройки от неё не зависят.
 AdminMenu::ensureLogsPage(
-	(string)Application::getDocumentRoot(),
-	dirname(__DIR__)
+    (string)Application::getDocumentRoot(),
+    dirname(__DIR__)
 );
 
 return AdminMenu::build(
-	lang: (string)($context?->getLanguage() ?: LANGUAGE_ID),
-	isPerfmonInstalled: ModuleManager::isModuleInstalled('perfmon'),
+    lang: (string)($context?->getLanguage() ?: LANGUAGE_ID),
+    isPerfmonInstalled: ModuleManager::isModuleInstalled('perfmon'),
 );

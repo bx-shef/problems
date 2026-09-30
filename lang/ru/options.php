@@ -1,4 +1,5 @@
 <?php
+
 $MESS['shef.problems_TAB_DEF_NAME'] = 'Сотрудники';
 $MESS['shef.problems_TAB_DEF_TITLE'] = 'Сопоставление сотрудников с ролями';
 $MESS['shef.problems_TAB_DEF_SystemUserId'] = '[URL=/bitrix/admin/user_edit.php?lang=#LANG#&ID=#ID#]Служебный пользователь [id:#ID#][/URL]. Задается в модуле [URL=/bitrix/admin/settings.php?lang=#LANG#&mid=shef.options]shef.options[/URL].';

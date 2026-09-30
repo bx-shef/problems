@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 /**
  * Лог одной цепочки: Log1Handler.
@@ -43,12 +45,11 @@ $file = sys_get_temp_dir().'/shef-problems-example-log1-'.getmypid().'.log';
 file_put_contents($file, 'запись прошлого запроса'.PHP_EOL);
 
 /** Логгер одного «запроса». */
-$request = static function() use ($file): Logger
-{
-	return (new Logger('log1'))->pushHandler(
-		(new Log1Handler(filename: $file, level: Level::Debug))
-			->setFormatter(new LineFormatter('%message%'.PHP_EOL))
-	);
+$request = static function () use ($file): Logger {
+    return (new Logger('log1'))->pushHandler(
+        (new Log1Handler(filename: $file, level: Level::Debug))
+            ->setFormatter(new LineFormatter('%message%'.PHP_EOL))
+    );
 };
 
 step('Первый запрос');
