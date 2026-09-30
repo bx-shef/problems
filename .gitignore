@@ -2,7 +2,20 @@
 .DS_Store
 
 composer.phar
-composer.lock
+
+# composer.lock НЕ игнорируется намеренно. Точная версия php-cs-fixer в
+# composer.json пришпиливает сам инструмент, но не три десятка его
+# зависимостей: без lock CI разрешал бы их заново на каждом прогоне, и
+# неудачный выпуск любой из них ронял бы Lint на коммите, который ничего не
+# менял. Потребителей пакета lock не касается: Composer читает его только у
+# корневого проекта.
+
+# Линтер: инструменты разработчика и его кеш. vendor/ здесь — не каталог
+# Composer, а своя копия Monolog под git, поэтому composer.json ставит
+# инструменты в vendor-dev/: иначе composer install переписал бы копию той
+# версией Monolog, что разрешилась в lock.
+/vendor-dev/
+/.php-cs-fixer.cache
 
 /.versions
 /bitrix-version-builder

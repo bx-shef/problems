@@ -31,6 +31,22 @@
 		"bxshef/options": "^3.0",
 		"monolog/monolog": "^3.10"
 	},
+	"require-dev": {
+		"friendsofphp/php-cs-fixer": "3.95.27"
+	},
+	"config": {
+		"vendor-dir": "vendor-dev",
+		"allow-plugins": {
+			"composer/installers": false
+		},
+		"platform": {
+			"php": "8.2.0"
+		}
+	},
+	"scripts": {
+		"lint": "php-cs-fixer fix --dry-run --diff",
+		"lint:fix": "php-cs-fixer fix"
+	},
 	"extra": {
 		"installer-name": "shef.problems",
 		"branch-alias": {

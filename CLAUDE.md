@@ -7,7 +7,12 @@
 [CLAUDE.md shef.options](https://github.com/bx-shef/options/blob/main/CLAUDE.md):
 всё, что там сказано про устройство модуля линейки, верно и здесь.
 
-Проверка перед сдачей — всегда `./build.sh --check`, ровно это же гоняет CI.
+Проверок перед сдачей две, и обе гоняет CI: `./build.sh --check` — состав
+поставки, синтаксис, тесты; `composer run lint` — форматирование
+(php-cs-fixer, набор `@PSR12`). Линтер стоит в `require-dev` и из `build.sh`
+не зовётся намеренно: сборка обязана отрабатывать в свежем клоне, где
+`composer install` ещё не запускали. Composer ставит инструменты в
+`vendor-dev/`, а не в `vendor/`: `vendor/` здесь — своя копия Monolog под git.
 
 **Как работа попадает в `main`** — [docs/agent-rules.md](docs/agent-rules.md):
 только через PR; `/code-review` на каждый PR, а на изменения поведения,

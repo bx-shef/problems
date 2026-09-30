@@ -47,6 +47,9 @@ Composer разворачивает в целевой каталог **коре�
 | `.github/` | KEEP | CI и релиз |
 | `CONTRIBUTING.md`, `CLAUDE.md` | KEEP | процесс и памятка агенту |
 | `.gitattributes`, `.gitignore` | KEEP | |
+| `.php-cs-fixer.dist.php` | KEEP | правила линтера, `@PSR12` |
+| `composer.lock` | KEEP | держит зависимости линтера; пакету не нужен — Composer читает lock только у корневого проекта |
+| `vendor-dev/` | — | инструменты разработчика из `composer install`, в `.gitignore` |
 
 ## Нижний регистр в `lib/` обязателен
 
