@@ -174,9 +174,9 @@ Extension::load([
 $tabControl->Begin();
 ?>
 <form
-	method="POST"
-	action="<?=Utils::getCMainApplication()->GetCurPage();?>?mid=<?=urlencode((string)$mid)?>&lang=<?=LANGUAGE_ID;?>"
-	name="opt_form"
+    method="POST"
+    action="<?=Utils::getCMainApplication()->GetCurPage();?>?mid=<?=urlencode((string)$mid)?>&lang=<?=LANGUAGE_ID;?>"
+    name="opt_form"
 >
 <?php
     Utils::renderTab(
@@ -185,28 +185,28 @@ $tabControl->Begin();
         $tabs
     );
 $tabControl->Buttons();?>
-		<input
-			type="submit"
-			name="Update"
-			<?=($modulePerms < 'W' ? 'disabled' : '')?>
-			value="<?=GetMessage('MAIN_SAVE')?>"
-			title="<?=GetMessage('MAIN_OPT_SAVE_TITLE')?>"
-			class="adm-btn-save"
-		>
-		<input
-			type="reset"
-			name="reset"
-			value="<?=Loc::getMessage('MAIN_RESET');?>"
-		>
-		<input type="submit"
-			name="RestoreDefaults"
-			<?= $modulePerms < 'W' ? 'disabled' : '' ?>
-			title="<?=GetMessage('MAIN_HINT_RESTORE_DEFAULTS')?>"
-			onclick="return confirm('<?=AddSlashes(GetMessage('MAIN_HINT_RESTORE_DEFAULTS_WARNING'))?>')"
-			value="<?=GetMessage('MAIN_RESTORE_DEFAULTS')?>"
-		>
-		<?=bitrix_sessid_post();?>
-	<?php $tabControl->End();?>
+        <input
+            type="submit"
+            name="Update"
+            <?=($modulePerms < 'W' ? 'disabled' : '')?>
+            value="<?=GetMessage('MAIN_SAVE')?>"
+            title="<?=GetMessage('MAIN_OPT_SAVE_TITLE')?>"
+            class="adm-btn-save"
+        >
+        <input
+            type="reset"
+            name="reset"
+            value="<?=Loc::getMessage('MAIN_RESET');?>"
+        >
+        <input type="submit"
+            name="RestoreDefaults"
+            <?= $modulePerms < 'W' ? 'disabled' : '' ?>
+            title="<?=GetMessage('MAIN_HINT_RESTORE_DEFAULTS')?>"
+            onclick="return confirm('<?=AddSlashes(GetMessage('MAIN_HINT_RESTORE_DEFAULTS_WARNING'))?>')"
+            value="<?=GetMessage('MAIN_RESTORE_DEFAULTS')?>"
+        >
+        <?=bitrix_sessid_post();?>
+    <?php $tabControl->End();?>
 </form>
 <?php
 // endregion ////

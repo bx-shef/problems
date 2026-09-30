@@ -29,21 +29,21 @@ if (!function_exists('_pr')) {
             $bt = debug_backtrace();
             $dRoot = Application::getDocumentRoot();
             ?>
-			<div style="font-size:9pt; color:#000; background:#fff; border:1px dashed #000;">
-			<div style="padding:3px 5px; background:#99CCFF;">
-				<?php foreach ($bt as $value):
-				    // У кадра встроенной функции нет file и line.
-				    $file = (string)($value['file'] ?? '');
-				    $dRoot = str_replace("/", "\\", $dRoot);
-				    $file = str_replace($dRoot, "", $file);
-				    $dRoot = str_replace("\\", "/", $dRoot);
-				    $file = str_replace($dRoot, "", $file);
-				    ?>File: <b><?=htmlspecialcharsbx($file)?></b> [line: <?=(int)($value['line'] ?? 0)?>]<br><?php
-				endforeach
+            <div style="font-size:9pt; color:#000; background:#fff; border:1px dashed #000;">
+            <div style="padding:3px 5px; background:#99CCFF;">
+                <?php foreach ($bt as $value):
+                    // У кадра встроенной функции нет file и line.
+                    $file = (string)($value['file'] ?? '');
+                    $dRoot = str_replace("/", "\\", $dRoot);
+                    $file = str_replace($dRoot, "", $file);
+                    $dRoot = str_replace("\\", "/", $dRoot);
+                    $file = str_replace($dRoot, "", $file);
+                    ?>File: <b><?=htmlspecialcharsbx($file)?></b> [line: <?=(int)($value['line'] ?? 0)?>]<br><?php
+                endforeach
             ?>
-			</div>
-			<pre style="color:#000; padding:10px;"><?=htmlspecialcharsbx(print_r($o, true))?></pre>
-			</div><?php
+            </div>
+            <pre style="color:#000; padding:10px;"><?=htmlspecialcharsbx(print_r($o, true))?></pre>
+            </div><?php
         }
     }
 }

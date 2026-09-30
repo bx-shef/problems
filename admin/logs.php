@@ -62,32 +62,32 @@ if ($name === '') {
     // region Список ////
     $list = $files->getList();
     ?>
-	<p><?=$escape((string)Loc::getMessage('SH_PROBLEMS_LOGS_DIR', ['#DIR#' => $files->getDir()]))?></p>
-	<?php if (empty($list)): ?>
-		<?php \CAdminMessage::ShowNote(Loc::getMessage('SH_PROBLEMS_LOGS_EMPTY')); ?>
-	<?php else: ?>
-		<table class="internal" style="width: 100%;">
-			<tr class="heading">
-				<td><?=$escape((string)Loc::getMessage('SH_PROBLEMS_LOGS_COL_NAME'))?></td>
-				<td><?=$escape((string)Loc::getMessage('SH_PROBLEMS_LOGS_COL_SIZE'))?></td>
-				<td><?=$escape((string)Loc::getMessage('SH_PROBLEMS_LOGS_COL_MODIFIED'))?></td>
-			</tr>
-			<?php foreach ($list as $file): ?>
-				<tr>
-					<td><a href="<?=$escape(AdminMenu::getUrlLogFile($file['name'], $lang))?>"><?=$escape($file['name'])?></a></td>
-					<td style="text-align: right;"><?=$escape(\CFile::FormatSize($file['size']))?></td>
-					<td><?=$escape(date('d.m.Y H:i:s', $file['modified']))?></td>
-				</tr>
-			<?php endforeach; ?>
-		</table>
-	<?php endif;
+    <p><?=$escape((string)Loc::getMessage('SH_PROBLEMS_LOGS_DIR', ['#DIR#' => $files->getDir()]))?></p>
+    <?php if (empty($list)): ?>
+        <?php \CAdminMessage::ShowNote(Loc::getMessage('SH_PROBLEMS_LOGS_EMPTY')); ?>
+    <?php else: ?>
+        <table class="internal" style="width: 100%;">
+            <tr class="heading">
+                <td><?=$escape((string)Loc::getMessage('SH_PROBLEMS_LOGS_COL_NAME'))?></td>
+                <td><?=$escape((string)Loc::getMessage('SH_PROBLEMS_LOGS_COL_SIZE'))?></td>
+                <td><?=$escape((string)Loc::getMessage('SH_PROBLEMS_LOGS_COL_MODIFIED'))?></td>
+            </tr>
+            <?php foreach ($list as $file): ?>
+                <tr>
+                    <td><a href="<?=$escape(AdminMenu::getUrlLogFile($file['name'], $lang))?>"><?=$escape($file['name'])?></a></td>
+                    <td style="text-align: right;"><?=$escape(\CFile::FormatSize($file['size']))?></td>
+                    <td><?=$escape(date('d.m.Y H:i:s', $file['modified']))?></td>
+                </tr>
+            <?php endforeach; ?>
+        </table>
+    <?php endif;
     // endregion ////
 } else {
     // region Файл ////
     $path = $files->resolve($name);
     ?>
-	<p><a href="<?=$escape(AdminMenu::getUrlLogList($lang))?>">&larr; <?=$escape((string)Loc::getMessage('SH_PROBLEMS_LOGS_BACK'))?></a></p>
-	<?php
+    <p><a href="<?=$escape(AdminMenu::getUrlLogList($lang))?>">&larr; <?=$escape((string)Loc::getMessage('SH_PROBLEMS_LOGS_BACK'))?></a></p>
+    <?php
     if (null === $path) {
         \CAdminMessage::ShowMessage(Loc::getMessage('SH_PROBLEMS_LOGS_NOT_FOUND', ['#FILE#' => $escape($name)]));
     } else {
@@ -99,8 +99,8 @@ if ($name === '') {
             ]));
         }
         ?>
-		<pre style="white-space: pre-wrap; word-break: break-all; background: #fff; padding: 10px; border: 1px solid #d7dde2;"><?=$escape($tail['content'])?></pre>
-		<?php
+        <pre style="white-space: pre-wrap; word-break: break-all; background: #fff; padding: 10px; border: 1px solid #d7dde2;"><?=$escape($tail['content'])?></pre>
+        <?php
     }
     // endregion ////
 }

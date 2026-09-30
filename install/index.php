@@ -645,13 +645,13 @@ class shef_problems extends CModule
             'HTML' => true
         ]);
         ?>
-		<form action="<?=$this->application->GetCurPage()?>" method="get">
-			<p>
-				<input type="hidden" name="lang" value="<?=LANG?>">
-				<input type="submit" value="<?=($buttonName <> '' ? $buttonName : Loc::getMessage('SH_MOD_BACK'))?>">
-			</p>
-		</form>
-		<?php
+        <form action="<?=$this->application->GetCurPage()?>" method="get">
+            <p>
+                <input type="hidden" name="lang" value="<?=LANG?>">
+                <input type="submit" value="<?=($buttonName <> '' ? $buttonName : Loc::getMessage('SH_MOD_BACK'))?>">
+            </p>
+        </form>
+        <?php
         include(Application::getDocumentRoot().'/bitrix/modules/main/include/epilog_admin.php');
         die();
     }
