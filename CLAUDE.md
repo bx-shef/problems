@@ -48,6 +48,7 @@ PSR-3 — `tests/stub/psr.php`, классы модуля и своя копия
 | `include_test.php` | подключение модуля даёт свои `_log()`, `_log1()`, `_pr()`; трассировка в них — без аргументов вызовов; `_pr()` — только администратору |
 | `lang_test.php` | у каждого `Loc::getMessage('…')` модуля есть перевод в `lang/ru/` |
 | `format_test.php` | табов вне строковых литералов нет — там, куда линтер не дотягивается (инлайновый HTML) |
+| `layout_test.php` | `install/layout.php` для портала из git (bx-shef/options#55): копии = `installDir`, заглушка логов = `AdminPage`, подключается без ядра |
 | `uninstall_test.php` | установка файлов — из каталога модуля; удаление уносит настройки, обработчики (включая оставшийся от 1.x) и свою заглушку, чужое не трогает |
 | `vendor_test.php` | своя копия Monolog подходит под `composer.json` и не даёт deprecation |
 | `composer_test.php` | тип пакета, `installer-name`, потолок `composer/installers` |
