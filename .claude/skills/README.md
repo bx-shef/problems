@@ -1,6 +1,7 @@
 # Навыки линейки shef.*
 
-Каталог-источник — [bx-shef/options](https://github.com/bx-shef/options),
+Источник — [bx-shef/skills](https://github.com/bx-shef/skills) (каталог `skills/`, коммит — в `SOURCE`; обновить — `update.sh`). Раньше —
+[bx-shef/options](https://github.com/bx-shef/options),
 `.claude/skills/`. В остальные репозитории линейки навыки **раскладываются**
 скриптом, а не копируются руками.
 

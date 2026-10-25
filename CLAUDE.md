@@ -57,14 +57,15 @@ PSR-3 — `tests/stub/psr.php`, классы модуля и своя копия
 | `skills_test.php` | навыки оформлены, копия сходится со своим `MANIFEST` |
 | `evals_test.php` | evals навыков разбираются |
 
-**Навыки — копия, а не источник.** `.claude/skills/` раскладывает
-`sync.sh --to` из [bx-shef/options](https://github.com/bx-shef/options); там
-же их и правят. Навык про этот модуль — `shef-use-logger` — тоже живёт в
-shef.options: навыки — один каталог на всю линейку. Класс
+**Навыки — копия, а не источник.** `.claude/skills/` — копия
+[bx-shef/skills](https://github.com/bx-shef/skills) на коммите из
+`.claude/skills/SOURCE` (с 2026-10; раньше — `bx-shef/options`); обновить —
+`.claude/skills/update.sh` (PR с новым `SOURCE`), правят их только в
+источнике. Навык про этот модуль — `shef-use-logger` — тоже живёт в
+bx-shef/skills: навыки — один каталог на всю линейку. Класс
 `\Shef\Problems\...`, названный в навыке, проверяет **этот** репозиторий
-(`tests/docs_test.php`), а не источник. Задача `Skills` в CI сверяет копию с
-источником и краснеет, когда источник ушёл вперёд — это сигнал разложить
-заново, а не чинить копию.
+(`tests/docs_test.php`), а не источник. Задача `Skills` в CI (`update.sh --verify`)
+сверяет копию с коммитом из `SOURCE`; покраснела — `update.sh`, а не правка копии.
 
 **Примеры в `examples/` запускаются, а не читаются.** Как в shef.options:
 `php examples/x.php` — на заглушках, `DOCUMENT_ROOT=/var/www/portal php
