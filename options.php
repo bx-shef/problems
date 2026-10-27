@@ -2,7 +2,6 @@
 
 /**
  * @global string $Update
- * @global string $RestoreDefaults
  * @global string $mid
  */
 
@@ -99,45 +98,41 @@ try {
     }
 
     if (
-        $request->isPost() && $Update.$RestoreDefaults <> '' && check_bitrix_sessid()
+        $request->isPost() && $Update <> '' && check_bitrix_sessid()
     ) {
         if ($modulePerms < 'W') {
             CAdminMessage::ShowMessage('Wrong right for save');
         } else {
-            if ($RestoreDefaults <> '') {
-                Config\Option::delete($mid);
-            } else {
-                /** @var Options\Tab $tab */
-                foreach ($tabs as $tab) {
-                    if (!($tab instanceof Options\Tab)) {
+            /** @var Options\Tab $tab */
+            foreach ($tabs as $tab) {
+                if (!($tab instanceof Options\Tab)) {
+                    continue;
+                }
+
+                /** @var Options\AOption $option */
+                foreach ($tab->getOptionList() as $option) {
+                    if (
+                        !($option instanceof Options\AOption) || $option instanceof Options\RowInfo
+                    ) {
                         continue;
                     }
 
-                    /** @var Options\AOption $option */
-                    foreach ($tab->getOptionList() as $option) {
-                        if (
-                            !($option instanceof Options\AOption) || $option instanceof Options\RowInfo
-                        ) {
-                            continue;
-                        }
+                    $complexCode = $option->getComplexCode();
+                    $value = $request->getPost('param_'.$complexCode);
 
-                        $complexCode = $option->getComplexCode();
-                        $value = $request->getPost('param_'.$complexCode);
-
-                        if (
-                            $option instanceof Options\Checkbox && (string)$value !== $option->getValueY()
-                        ) {
-                            $value = $option->getValueN();
-                        }
-
-                        if (is_array($value)) {
-                            $value = serialize($value);
-                        } else {
-                            $value = trim((string)$value);
-                        }
-
-                        Config\Option::set($mid, $complexCode, $value);
+                    if (
+                        $option instanceof Options\Checkbox && (string)$value !== $option->getValueY()
+                    ) {
+                        $value = $option->getValueN();
                     }
+
+                    if (is_array($value)) {
+                        $value = serialize($value);
+                    } else {
+                        $value = trim((string)$value);
+                    }
+
+                    Config\Option::set($mid, $complexCode, $value);
                 }
             }
         }
@@ -197,13 +192,6 @@ $tabControl->Buttons();?>
             type="reset"
             name="reset"
             value="<?=Loc::getMessage('MAIN_RESET');?>"
-        >
-        <input type="submit"
-            name="RestoreDefaults"
-            <?= $modulePerms < 'W' ? 'disabled' : '' ?>
-            title="<?=GetMessage('MAIN_HINT_RESTORE_DEFAULTS')?>"
-            onclick="return confirm('<?=AddSlashes(GetMessage('MAIN_HINT_RESTORE_DEFAULTS_WARNING'))?>')"
-            value="<?=GetMessage('MAIN_RESTORE_DEFAULTS')?>"
         >
         <?=bitrix_sessid_post();?>
     <?php $tabControl->End();?>
