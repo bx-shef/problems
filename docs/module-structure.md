@@ -25,6 +25,7 @@ Composer разворачивает в целевой каталог **коре�
 |---|---|---|
 | `install/index.php` | SHIP | установщик, класс `shef_problems extends CModule` |
 | `install/version.php` | SHIP | `VERSION` и `VERSION_DATE` — источник истины о версии |
+| `install/layout.php` | SHIP | раскладка вне каталога модуля для портала из git: копия `install/js` в `/bitrix/js` и заглушка страницы логов; читает `Main\Modules\Layout` из `shef.options` |
 | `install/js/shef-problems/` | SHIP | стили вывода `PrHtml`; установщик раскладывает их в `/bitrix/js` |
 | `admin/menu.php` | SHIP | меню «Учёт проблем»; ядро подключает его само, из каталога модуля |
 | `admin/logs.php` | SHIP | страница просмотра логов; открывается заглушкой `/bitrix/admin/shef_problems_logs.php`, которую пишет установщик (`Main\AdminPage`) |
@@ -50,6 +51,27 @@ Composer разворачивает в целевой каталог **коре�
 | `.php-cs-fixer.dist.php` | KEEP | правила линтера, `@PSR12` |
 | `composer.lock` | KEEP | держит зависимости линтера; пакету не нужен — Composer читает lock только у корневого проекта |
 | `vendor-dev/` | — | инструменты разработчика из `composer install`, в `.gitignore` |
+
+## Классы `lib/`
+
+| класс | что делает |
+|---|---|
+| `Logger` (`lib/logger.php`) | enum предустановленных логгеров — сервисов из `.settings.php` (ключ `services`); `Logger::Problems` — фабрика через трейт `LoggerProblems` |
+| `Integration\Monolog\Logger` | логгер на Monolog: обработчики, процессоры, конвертеры контекста |
+| `Integration\Monolog\Handler\*` | `PrHandler`, `PrHtmlHandler` (вывод `_pr`), `Log1Handler` (`_log1`), `CappedStreamHandler` (файл с ограничением размера), `BitrixCEventLogHandler` (журнал событий) |
+| `Integration\Monolog\Entity\BitrixCEventLogEntity`, `Formatter\BitrixCEventLogFormatter` | запись в журнал событий, `mapSeverity()` |
+| `Integration\Monolog\Processor\TraceProcessor` | трассировка в записи |
+| `Integration\Monolog\Strategy\LoggerConverter\*` | приведение контекста к массиву: массивы, `Arrayable`, `Jsonable`, `JsonSerializable`, `Stringable`, `Throwable`, `Bitrix\Main\Error`, `Result` |
+| `Factory\SystemLoggerFactory`, `Factory\Trait\LoggerProblems`, `DebuggerProblems` | сборка логгера модуля и трейты для своих классов |
+| `Throwable\Manager`, `Throwable\TraceRow\*` | ошибка из исключения, трассировка строкой (`Simple`, `Full`) |
+| `Main\Constants` | константы, в том числе имена расширений |
+| `Main\Utils` | `getAllParents()`, `workDateAdd()`, `getUserBoss()` |
+| `Main\LogFiles` | список, проверка имени и хвост файлов логов для `admin/logs.php` |
+| `Main\AdminPage` | заглушка `/bitrix/admin/shef_problems_logs.php` |
+| `Integration\Main\Events` | `OnPageStart`, типы аудита для журнала событий |
+| `Integration\Main\AdminMenu` | пункты меню «Учёт проблем» и адреса страниц |
+| `Integration\Shef\UiClear\Events` | пункт в меню пользователя верхней панели |
+| `Integration\Bizproc\EmptyActivity` | пустое действие бизнес-процесса |
 
 ## Нижний регистр в `lib/` обязателен
 
@@ -85,6 +107,6 @@ install/js/shef-problems/monolog-pr-html-admin/  -> /bitrix/js/shef-problems/mon
 ## Документация не едет на портал
 
 Документация живёт в репозитории. В поставке остаётся только `README.md` — как
-readme пакета, — и все ссылки из него ведут на GitHub. Скриншоты, которые до
-2.0.0 раскладывались в `/bitrix/images/shef.problems`, ушли вместе с
-документацией; каталог на обновлённых порталах убирает деинсталляция.
+readme пакета, — и все ссылки из него ведут на GitHub. Каталог
+`/bitrix/images/shef.problems` модуль не использует; если он остался на портале,
+его убирает деинсталляция.
