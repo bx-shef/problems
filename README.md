@@ -124,6 +124,7 @@ final class OrdersExchange
 * [ротация логов](https://github.com/bx-shef/problems/blob/main/docs/5_logrotate.md)
 * [безопасность логов](https://github.com/bx-shef/problems/blob/main/docs/security.md)
 * [запускаемые примеры](https://github.com/bx-shef/problems/blob/main/examples/README.md)
+* [для разработчиков модулей линейки](https://github.com/bx-shef/problems/blob/main/docs/dev/README.md)
 * [проверка на портале](https://github.com/bx-shef/problems/blob/main/docs/portal-check.md)
 * [change log](https://github.com/bx-shef/problems/blob/main/CHANGELOG.md)
 
