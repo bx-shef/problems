@@ -2,6 +2,8 @@
 
 ## Не выпущено
 
+## 2.0.4 — 2026-11-10
+
 * **LF в рабочей копии на Windows** — `.gitattributes` `* text=auto eol=lf`: с core.autocrlf проверки, читающие исходники, не расходятся. (лента: нет)
 * include.php: комментарий о порядке подключения называет каталог логов shef.options по его коду — вне корня сайта (`shef_options_log_dir()`), а не `/local/log`. (лента: нет)
 * Документация для разработчиков модулей линейки: `docs/dev/README.md` (вход), `docs/dev/logging.md` (запись и чтение проблем), `docs/dev/api.md` (публичный API и события); `docs/2_deffunctions.md` — каталог `_log()` shef.options сверен с 3.7.0 (лента: нет)
