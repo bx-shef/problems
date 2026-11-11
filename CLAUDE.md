@@ -160,7 +160,7 @@ enum `\Shef\Problems\Logger`. `handlerType` сервиса решает, поп�
 удалять со следующей мажорной версией.
 
 **Пакет Composer — `bxshef/problems`, тип `bitrix-module`**, `installer-name =
-shef.problems`, лицензия MIT, потолок `composer/installers`. Всё — ровно как в
+shef.problems`, лицензия proprietary, потолок `composer/installers`. Всё — ровно как в
 shef.options и по тем же причинам (см. его CLAUDE.md, «bitrix-d7-module
 развернул бы модуль не туда»). В 1.1.7 стояло `shef/problems` +
 `bitrix-d7-module`: модуль уехал бы в `bitrix/modules/shef.shef.problems/`.

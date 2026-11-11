@@ -2,7 +2,7 @@
 
 $MESS['shef.problems_MODULE_NAME'] = '[SH] Учёт проблем';
 $MESS['shef.problems_MODULE_DESC'] = 'Логирование на Monolog: файлы логов, журнал событий, вывод отладки и учёт проблем в Битрикс24 | БУС.';
-$MESS['shef.problems_PARTNER_NAME'] = 'ИП Шевчик И.С.';
+$MESS['shef.problems_PARTNER_NAME'] = 'ООО «БэИксШефБай»';
 $MESS['shef.problems_PARTNER_URI'] = 'https://bx-shef.by';
 
 $MESS['SH_MOD_BACK'] = 'К списку модулей';

@@ -2,7 +2,7 @@
 	"name": "bxshef/problems",
 	"description": "Битрикс24 (коробка): логирование на Monolog — файлы логов, журнал событий, вывод отладки, учёт проблем",
 	"type": "bitrix-module",
-	"license": "MIT",
+	"license": "proprietary",
 	"keywords": [
 		"bitrix",
 		"Bitrix24",
