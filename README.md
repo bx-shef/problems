@@ -140,4 +140,4 @@ final class OrdersExchange
 
 # Лицензия
 
-[MIT](https://github.com/bx-shef/problems/blob/main/LICENSE)
+Бесплатно, права у ООО «БэИксШефБай»; условия — в [LICENSE](https://github.com/bx-shef/problems/blob/main/LICENSE).
