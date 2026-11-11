@@ -16,6 +16,7 @@ use Bitrix\Main\Request;
 use Bitrix\Main\UI\Extension;
 use Shef\Options\Main\Options;
 use Shef\Options\Main\Utils;
+use Shef\Problems\Main\Brand;
 
 Loc::loadMessages(Application::getDocumentRoot().'/bitrix/modules/main/options.php');
 Loc::loadMessages(__FILE__);
@@ -168,6 +169,8 @@ Extension::load([
 
 $tabControl->Begin();
 ?>
+<style><?=Brand::css()?></style>
+<?=Brand::head((string)Loc::getMessage('shef.problems_PAGE_TITLE'))?>
 <form
     method="POST"
     action="<?=Utils::getCMainApplication()->GetCurPage();?>?mid=<?=urlencode((string)$mid)?>&lang=<?=LANGUAGE_ID;?>"
