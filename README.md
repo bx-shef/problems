@@ -140,7 +140,7 @@ final class OrdersExchange
 
 # Состояние и план
 
-Текущая версия — 2.0.5. Открытые задачи — в [задачах репозитория](https://github.com/bx-shef/problems/issues):
+Текущая версия — 2.0.6. Открытые задачи — в [задачах репозитория](https://github.com/bx-shef/problems/issues):
 
 * P2 — [#20](https://github.com/bx-shef/problems/issues/20) журнал событий: причина и описание проблемы читаются понятнее;
 * P3 — [#5](https://github.com/bx-shef/problems/issues/5) расчёт рабочих дней без калькулятора бизнес-процессов, [#9](https://github.com/bx-shef/problems/issues/9) уведомления пользователю через pull, [#19](https://github.com/bx-shef/problems/issues/19) README с практических задач, [#33](https://github.com/bx-shef/problems/issues/33) тест пути своей копии Monolog в контейнере.
