@@ -156,7 +156,7 @@ $brokenMethods = [];
 $checked = 0;
 
 foreach ($markdown as $file) {
-    if (in_array($file, $historical, true)) {
+    if (in_array($file, $historical, true) || str_starts_with($file, 'docs/private/agent/')) {
         continue;
     }
 

@@ -259,7 +259,7 @@ class Constants
      *
      * ⚠ Вкладка GRP на странице настроек выключена (options_conf.php), так что
      * задать значение негде и метод всегда отдаёт умолчание. Оставлен как
-     * публичный API — см. «Известные шероховатости» в CLAUDE.md.
+     * публичный API — см. docs/private/agent/known-issues.md.
      */
     public static function getGroupIdTask(): int
     {
