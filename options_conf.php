@@ -123,7 +123,7 @@ $options->addTab(
 // «слэш-слэш-звёздочка-слэш» закрывает. Допишите слэш в начало первой — и
 // вкладка включится. Constants::getGroupIdTask() и getGroupIdIntegrateB24()
 // читают её опции и пока отдают умолчание. См. «Известные шероховатости»
-// в CLAUDE.md.
+// в docs/private/agent/known-issues.md.
 /*/
 $options->addTab(
     (new Options\Tab('GRP'))

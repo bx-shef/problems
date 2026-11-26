@@ -35,7 +35,7 @@
 | `getLogDir(): string`, `getLogFullPath(string $name): string` | каталог логов (без `/` на конце) и `<каталог>/<имя>.log` |
 | `getDefUserId()`, `getAdminId()`, `getDirectorId()`, `getSyncUserId()`, `getProductsUserId()`, `getSaleUserId()`: `int` | ответственные из настроек модуля (опции `DEF_*`), умолчание `DEFAULT_USER_ID` = 1 |
 | `getIdOption(string $code): int` | такая опция по коду, например `DEF_adminid` |
-| `getGroupIdTask()`, `getGroupIdIntegrateB24()` | отдают умолчание: задать значение в интерфейсе негде (CLAUDE.md, «Известные шероховатости») |
+| `getGroupIdTask()`, `getGroupIdIntegrateB24()` | отдают умолчание: задать значение в интерфейсе негде (docs/private/agent/known-issues.md, «Известные шероховатости») |
 
 ### `\Shef\Problems\Integration\Monolog\Logger`
 
